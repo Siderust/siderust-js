@@ -1,0 +1,47 @@
+{
+  "name": "@siderust/siderust",
+  "version": "0.1.0",
+  "description": "High-precision astronomy for Node.js — observer setup, celestial body tracking, altitude/azimuth events, coordinate transforms, ephemerides, and lunar phases. Powered by Rust.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "build": "napi build --release --platform",
+    "build:debug": "napi build --platform",
+    "test": "node --test __test__/*.test.mjs",
+    "prepublishOnly": "napi build --release --platform"
+  },
+  "napi": {
+    "name": "siderust",
+    "triples": {
+      "defaults": true
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "examples/",
+    "README.md"
+  ],
+  "keywords": [
+    "astronomy",
+    "astrometry",
+    "ephemeris",
+    "coordinates",
+    "altitude",
+    "azimuth",
+    "solar-system",
+    "moon-phase",
+    "vsop87",
+    "napi",
+    "rust",
+    "native"
+  ],
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Siderust/siderust"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^2.18.4"
+  }
+}
