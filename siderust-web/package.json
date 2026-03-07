@@ -1,0 +1,49 @@
+{
+  "name": "@siderust/siderust-web",
+  "version": "0.1.0",
+  "description": "High-precision astronomy for the browser — observer setup, celestial body tracking, altitude/azimuth events, coordinate transforms, ephemerides, and lunar phases. Powered by Rust + WebAssembly.",
+  "type": "module",
+  "module": "pkg/siderust_web.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./pkg/siderust_web.js"
+    }
+  },
+  "scripts": {
+    "build": "wasm-pack build --target web --out-dir pkg --release --scope siderust",
+    "build:dev": "wasm-pack build --target web --out-dir pkg --dev --scope siderust",
+    "build:bundler": "wasm-pack build --target bundler --out-dir pkg --release --scope siderust",
+    "test": "node --test __test__/*.test.mjs",
+    "clean": "rm -rf pkg/"
+  },
+  "files": [
+    "pkg/siderust_web_bg.wasm",
+    "pkg/siderust_web.js",
+    "pkg/siderust_web.d.ts",
+    "index.d.ts",
+    "README.md",
+    "examples/"
+  ],
+  "keywords": [
+    "astronomy",
+    "astrometry",
+    "ephemeris",
+    "coordinates",
+    "altitude",
+    "azimuth",
+    "solar-system",
+    "moon-phase",
+    "vsop87",
+    "wasm",
+    "webassembly",
+    "browser",
+    "rust"
+  ],
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Siderust/siderust"
+  }
+}
