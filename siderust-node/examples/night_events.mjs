@@ -22,11 +22,13 @@ const {
 } = require(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.js'));
 
 const line = (label = '') =>
-  console.log(label ? `\n─── ${label} ${'─'.repeat(Math.max(0, 52 - label.length))}` : '─'.repeat(56));
+  console.log(
+    label ? `\n─── ${label} ${'─'.repeat(Math.max(0, 52 - label.length))}` : '─'.repeat(56),
+  );
 
-const obs = Observer.roqueDeLasMuchachos();   // La Palma
-const mjd0 = 60000.0;                        // 2023-02-25
-const mjd1 = mjd0 + 3;                       // 3-day window
+const obs = Observer.roqueDeLasMuchachos(); // La Palma
+const mjd0 = 60000.0; // 2023-02-25
+const mjd1 = mjd0 + 3; // 3-day window
 
 // ─── Sunrise / Sunset (horizon crossings, 0°) ────────────────────────────
 line('Sun horizon crossings (3 days)');
@@ -53,7 +55,9 @@ for (const e of astro) {
 line('Sun culminations (upper / lower transit)');
 const culm = bodyCulminations('Sun', obs, mjd0, mjd1);
 for (const e of culm) {
-  console.log(`  ${e.kind.padEnd(3)} alt ${e.altitudeDeg.toFixed(2).padStart(7)}° at MJD ${e.mjd.toFixed(5)}`);
+  console.log(
+    `  ${e.kind.padEnd(3)} alt ${e.altitudeDeg.toFixed(2).padStart(7)}° at MJD ${e.mjd.toFixed(5)}`,
+  );
 }
 
 // ─── Moon above 15° ───────────────────────────────────────────────────────

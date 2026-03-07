@@ -16,7 +16,6 @@ const {
   Observer,
   getPlanet,
   vsop87Heliocentric,
-  vsop87Barycentric,
   vsop87SunBarycentric,
   vsop87EarthBarycentric,
   vsop87EarthHeliocentric,
@@ -27,7 +26,9 @@ const {
 } = require(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.js'));
 
 const line = (label = '') =>
-  console.log(label ? `\n─── ${label} ${'─'.repeat(Math.max(0, 52 - label.length))}` : '─'.repeat(56));
+  console.log(
+    label ? `\n─── ${label} ${'─'.repeat(Math.max(0, 52 - label.length))}` : '─'.repeat(56),
+  );
 
 const J2000 = 2451545.0;
 const fmt = (v) => v.toExponential(6);
@@ -36,14 +37,18 @@ const fmt = (v) => v.toExponential(6);
 line('Planet data');
 for (const name of ['Mars', 'Jupiter', 'Saturn']) {
   const p = getPlanet(name);
-  console.log(`  ${p.name}: a=${p.semiMajorAxisAu.toFixed(4)} AU  e=${p.eccentricity.toFixed(4)}  R=${p.radiusKm.toFixed(0)} km`);
+  console.log(
+    `  ${p.name}: a=${p.semiMajorAxisAu.toFixed(4)} AU  e=${p.eccentricity.toFixed(4)}  R=${p.radiusKm.toFixed(0)} km`,
+  );
 }
 
 // ─── Heliocentric positions at J2000 ──────────────────────────────────────
 line('Heliocentric ecliptic (VSOP87a) at J2000');
 for (const body of ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']) {
   const p = vsop87Heliocentric(body, J2000);
-  console.log(`  ${body.padEnd(8)} x=${fmt(p.x)}  y=${fmt(p.y)}  z=${fmt(p.z)}  [${p.frame}, ${p.center}]`);
+  console.log(
+    `  ${body.padEnd(8)} x=${fmt(p.x)}  y=${fmt(p.y)}  z=${fmt(p.z)}  [${p.frame}, ${p.center}]`,
+  );
 }
 
 // ─── Barycentric positions ────────────────────────────────────────────────
@@ -68,15 +73,25 @@ console.log(`  frame: ${moon.frame}  center: ${moon.center}`);
 line('Coordinate frame transforms');
 // Vega approximate ICRS coordinates: RA 279.23° Dec 38.78°
 const ecliptic = transformDirection(38.78, 279.23, 'ICRS', 'EclipticMeanJ2000', J2000);
-console.log(`  ICRS → Ecliptic: polar=${ecliptic.polarDeg.toFixed(4)}°  azimuth=${ecliptic.azimuthDeg.toFixed(4)}°`);
+console.log(
+  `  ICRS → Ecliptic: polar=${ecliptic.polarDeg.toFixed(4)}°  azimuth=${ecliptic.azimuthDeg.toFixed(4)}°`,
+);
 
-const back = transformDirection(ecliptic.polarDeg, ecliptic.azimuthDeg, 'EclipticMeanJ2000', 'ICRS', J2000);
-console.log(`  Ecliptic → ICRS: polar=${back.polarDeg.toFixed(4)}°  azimuth=${back.azimuthDeg.toFixed(4)}°  (round-trip)`);
+const back = transformDirection(
+  ecliptic.polarDeg,
+  ecliptic.azimuthDeg,
+  'EclipticMeanJ2000',
+  'ICRS',
+  J2000,
+);
+console.log(
+  `  Ecliptic → ICRS: polar=${back.polarDeg.toFixed(4)}°  azimuth=${back.azimuthDeg.toFixed(4)}°  (round-trip)`,
+);
 
 // ─── Horizontal conversion ───────────────────────────────────────────────
 line('Direction to Horizontal');
 const obs = Observer.roqueDeLasMuchachos();
-const jdNow = 2460400.5;  // approximate 2024-04
+const jdNow = 2460400.5; // approximate 2024-04
 const horiz = directionToHorizontal(38.78, 279.23, 'ICRS', jdNow, obs);
 console.log(`  Altitude: ${horiz.polarDeg.toFixed(4)}°  Azimuth: ${horiz.azimuthDeg.toFixed(4)}°`);
 
