@@ -51,7 +51,9 @@ line('Topocentric');
 const topo = moonPhaseTopocentric(J2000, obs);
 console.log(`  label                 : ${topo.label}`);
 console.log(`  illuminated fraction  : ${topo.illuminatedFraction.toFixed(4)}`);
-console.log(`  illumination delta    : ${((topo.illuminatedFraction - geo.illuminatedFraction) * 100).toFixed(4)} %`);
+console.log(
+  `  illumination delta    : ${((topo.illuminatedFraction - geo.illuminatedFraction) * 100).toFixed(4)} %`,
+);
 console.log(`  elongation            : ${topo.elongationDeg.toFixed(4)}°`);
 
 // ── 2) Principal phase events ──

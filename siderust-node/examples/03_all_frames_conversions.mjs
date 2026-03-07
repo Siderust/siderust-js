@@ -14,27 +14,32 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const require = createRequire(import.meta.url);
-const {
-  transformPositionFrame,
-  cartesianMagnitude,
-} = require(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.js'));
+const { transformPositionFrame, cartesianMagnitude } = require(
+  join(dirname(fileURLToPath(import.meta.url)), '..', 'index.js'),
+);
 
 const JD = 2460000.5;
-const src = { x: 0.30, y: -0.70, z: 0.64 };
+const src = { x: 0.3, y: -0.7, z: 0.64 };
 
 function showFrameConversion(srcFrame, dstFrame, p) {
   const out = transformPositionFrame(p.x, p.y, p.z, srcFrame, dstFrame, JD);
   const back = transformPositionFrame(out.x, out.y, out.z, dstFrame, srcFrame, JD);
   const err = cartesianMagnitude(p.x - back.x, p.y - back.y, p.z - back.z);
   console.log(
-    `${srcFrame.padEnd(24)} -> ${dstFrame.padEnd(24)} out=(${out.x.toFixed(9)}, ${out.y.toFixed(9)}, ${out.z.toFixed(9)})  roundtrip=${err.toExponential(3)}`
+    `${srcFrame.padEnd(24)} -> ${dstFrame.padEnd(24)} out=(${out.x.toFixed(9)}, ${out.y.toFixed(9)}, ${out.z.toFixed(9)})  roundtrip=${err.toExponential(3)}`,
   );
 }
 
 console.log(`Frame conversion demo at JD(TT) = ${JD.toFixed(1)}\n`);
 
 // First, convert the ICRS source to each frame so we have starting points
-const frames = ['ICRS', 'EclipticMeanJ2000', 'EquatorialMeanJ2000', 'EquatorialMeanOfDate', 'EquatorialTrueOfDate'];
+const frames = [
+  'ICRS',
+  'EclipticMeanJ2000',
+  'EquatorialMeanJ2000',
+  'EquatorialMeanOfDate',
+  'EquatorialTrueOfDate',
+];
 const positions = {};
 positions['ICRS'] = src;
 for (const f of frames) {

@@ -17,12 +17,10 @@ const require = createRequire(import.meta.url);
 const {
   vsop87Heliocentric,
   vsop87Barycentric,
-  vsop87EarthHeliocentric,
   vsop87EarthBarycentric,
   transformPositionFrame,
   transformPositionCenter,
   cartesianMagnitude,
-  cartesianDistance,
 } = require(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.js'));
 
 const line = (label = '') =>
@@ -49,16 +47,28 @@ console.log(`  Y = ${fmt(posEcl.y)}`);
 console.log(`  Z = ${fmt(posEcl.z)}`);
 
 // Ecliptic → Equatorial
-const posEqu = transformPositionFrame(posEcl.x, posEcl.y, posEcl.z,
-  'EclipticMeanJ2000', 'EquatorialMeanJ2000', J2000);
+const posEqu = transformPositionFrame(
+  posEcl.x,
+  posEcl.y,
+  posEcl.z,
+  'EclipticMeanJ2000',
+  'EquatorialMeanJ2000',
+  J2000,
+);
 console.log('\nTransformed to EquatorialMeanJ2000 frame:');
 console.log(`  X = ${fmt(posEqu.x)}`);
 console.log(`  Y = ${fmt(posEqu.y)}`);
 console.log(`  Z = ${fmt(posEqu.z)}`);
 
 // Equatorial → ICRS
-const posICRS = transformPositionFrame(posEqu.x, posEqu.y, posEqu.z,
-  'EquatorialMeanJ2000', 'ICRS', J2000);
+const posICRS = transformPositionFrame(
+  posEqu.x,
+  posEqu.y,
+  posEqu.z,
+  'EquatorialMeanJ2000',
+  'ICRS',
+  J2000,
+);
 console.log('\nTransformed to ICRS frame:');
 console.log(`  X = ${fmt(posICRS.x)}`);
 console.log(`  Y = ${fmt(posICRS.y)}`);
@@ -79,8 +89,14 @@ console.log(`  Z = ${fmt(earthH.z)}`);
 console.log(`  Distance = ${fmt(earthDist)} AU`);
 
 // Earth → Geocentric (should be ~0)
-const earthG = transformPositionCenter(earthH.x, earthH.y, earthH.z,
-  'Heliocentric', 'Geocentric', J2000);
+const earthG = transformPositionCenter(
+  earthH.x,
+  earthH.y,
+  earthH.z,
+  'Heliocentric',
+  'Geocentric',
+  J2000,
+);
 const earthGDist = cartesianMagnitude(earthG.x, earthG.y, earthG.z);
 console.log('\nEarth (Geocentric EclipticMeanJ2000) — at origin:');
 console.log(`  X = ${earthG.x.toFixed(10)}`);
@@ -98,8 +114,14 @@ console.log(`  Z = ${fmt(marsH.z)}`);
 console.log(`  Distance = ${fmt(marsDist)} AU`);
 
 // Mars → Geocentric
-const marsG = transformPositionCenter(marsH.x, marsH.y, marsH.z,
-  'Heliocentric', 'Geocentric', J2000);
+const marsG = transformPositionCenter(
+  marsH.x,
+  marsH.y,
+  marsH.z,
+  'Heliocentric',
+  'Geocentric',
+  J2000,
+);
 const marsGDist = cartesianMagnitude(marsG.x, marsG.y, marsG.z);
 console.log('\nMars (Geocentric EclipticMeanJ2000) — as seen from Earth:');
 console.log(`  X = ${fmt(marsG.x)}`);
@@ -116,16 +138,34 @@ console.log('Mars transformation chain:');
 console.log('  Start: Heliocentric EclipticMeanJ2000');
 
 // Step 1: frame transform
-const marsHEqu = transformPositionFrame(marsH.x, marsH.y, marsH.z,
-  'EclipticMeanJ2000', 'EquatorialMeanJ2000', J2000);
+transformPositionFrame(
+  marsH.x,
+  marsH.y,
+  marsH.z,
+  'EclipticMeanJ2000',
+  'EquatorialMeanJ2000',
+  J2000,
+);
 console.log('  Step 1: Transform frame → Heliocentric EquatorialMeanJ2000');
 
 // Step 2: center transform (still in EquatorialMeanJ2000 not available directly,
 // so we do center transform in EclipticMeanJ2000, then frame transform)
-const marsGEcl = transformPositionCenter(marsH.x, marsH.y, marsH.z,
-  'Heliocentric', 'Geocentric', J2000);
-const marsGEqu = transformPositionFrame(marsGEcl.x, marsGEcl.y, marsGEcl.z,
-  'EclipticMeanJ2000', 'EquatorialMeanJ2000', J2000);
+const marsGEcl = transformPositionCenter(
+  marsH.x,
+  marsH.y,
+  marsH.z,
+  'Heliocentric',
+  'Geocentric',
+  J2000,
+);
+const marsGEqu = transformPositionFrame(
+  marsGEcl.x,
+  marsGEcl.y,
+  marsGEcl.z,
+  'EclipticMeanJ2000',
+  'EquatorialMeanJ2000',
+  J2000,
+);
 console.log('  Step 2: Transform center → Geocentric EquatorialMeanJ2000');
 console.log('  Result:');
 console.log(`    X = ${fmt(marsGEqu.x)}`);
@@ -146,16 +186,28 @@ console.log(`  Z = ${fmt(earthB.z)}`);
 console.log(`  Distance from SSB = ${fmt(earthBDist)} AU`);
 
 // Earth Barycentric → Geocentric (should be ~0)
-const earthBG = transformPositionCenter(earthB.x, earthB.y, earthB.z,
-  'Barycentric', 'Geocentric', J2000);
+const earthBG = transformPositionCenter(
+  earthB.x,
+  earthB.y,
+  earthB.z,
+  'Barycentric',
+  'Geocentric',
+  J2000,
+);
 const earthBGDist = cartesianMagnitude(earthBG.x, earthBG.y, earthBG.z);
 console.log(`\nEarth (Geocentric, from Barycentric):`);
 console.log(`  Distance = ${earthBGDist.toFixed(10)} (should be ~0)`);
 
 // Mars Barycentric → Geocentric
 const marsB = vsop87Barycentric('Mars', J2000);
-const marsBG = transformPositionCenter(marsB.x, marsB.y, marsB.z,
-  'Barycentric', 'Geocentric', J2000);
+const marsBG = transformPositionCenter(
+  marsB.x,
+  marsB.y,
+  marsB.z,
+  'Barycentric',
+  'Geocentric',
+  J2000,
+);
 const marsBGDist = cartesianMagnitude(marsBG.x, marsBG.y, marsBG.z);
 console.log('\nMars (Geocentric, from Barycentric):');
 console.log(`  X = ${fmt(marsBG.x)}`);
@@ -175,8 +227,14 @@ console.log(`  Y = ${starICRS.y.toFixed(3)}`);
 console.log(`  Z = ${starICRS.z.toFixed(3)}`);
 
 // ICRS → EquatorialMeanJ2000 (very small difference)
-const starEqu = transformPositionFrame(starICRS.x, starICRS.y, starICRS.z,
-  'ICRS', 'EquatorialMeanJ2000', J2000);
+const starEqu = transformPositionFrame(
+  starICRS.x,
+  starICRS.y,
+  starICRS.z,
+  'ICRS',
+  'EquatorialMeanJ2000',
+  J2000,
+);
 console.log('\nStar (EquatorialMeanJ2000):');
 console.log(`  X = ${starEqu.x.toFixed(3)}`);
 console.log(`  Y = ${starEqu.y.toFixed(3)}`);
@@ -194,10 +252,38 @@ console.log(`  Y = ${marsH.y.toFixed(10)}`);
 console.log(`  Z = ${marsH.z.toFixed(10)}`);
 
 // Helio Ecl → Geo EquatorialMeanJ2000 → Helio Ecl
-const temp1 = transformPositionCenter(marsH.x, marsH.y, marsH.z, 'Heliocentric', 'Geocentric', J2000);
-const temp2 = transformPositionFrame(temp1.x, temp1.y, temp1.z, 'EclipticMeanJ2000', 'EquatorialMeanJ2000', J2000);
-const temp3 = transformPositionFrame(temp2.x, temp2.y, temp2.z, 'EquatorialMeanJ2000', 'EclipticMeanJ2000', J2000);
-const recovered = transformPositionCenter(temp3.x, temp3.y, temp3.z, 'Geocentric', 'Heliocentric', J2000);
+const temp1 = transformPositionCenter(
+  marsH.x,
+  marsH.y,
+  marsH.z,
+  'Heliocentric',
+  'Geocentric',
+  J2000,
+);
+const temp2 = transformPositionFrame(
+  temp1.x,
+  temp1.y,
+  temp1.z,
+  'EclipticMeanJ2000',
+  'EquatorialMeanJ2000',
+  J2000,
+);
+const temp3 = transformPositionFrame(
+  temp2.x,
+  temp2.y,
+  temp2.z,
+  'EquatorialMeanJ2000',
+  'EclipticMeanJ2000',
+  J2000,
+);
+const recovered = transformPositionCenter(
+  temp3.x,
+  temp3.y,
+  temp3.z,
+  'Geocentric',
+  'Heliocentric',
+  J2000,
+);
 
 console.log('\nAfter round-trip transformation:');
 console.log(`  X = ${recovered.x.toFixed(10)}`);

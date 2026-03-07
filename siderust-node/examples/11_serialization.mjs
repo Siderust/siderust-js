@@ -33,8 +33,6 @@ const {
   vsop87EarthHeliocentric,
   vsop87Barycentric,
   vsop87MoonGeocentric,
-  transformPositionCenter,
-  transformPositionFrame,
   cartesianMagnitude,
   geodeticToEcef,
   moonPhase,
@@ -66,7 +64,7 @@ console.log(timeJson);
 
 const recoveredTimes = JSON.parse(timeJson);
 console.log(
-  `Roundtrip check: j2000=${recoveredTimes.j2000.toFixed(1)}, timeline_len=${recoveredTimes.timeline.length}\n`
+  `Roundtrip check: j2000=${recoveredTimes.j2000.toFixed(1)}, timeline_len=${recoveredTimes.timeline.length}\n`,
 );
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -97,7 +95,7 @@ console.log(coordJson);
 const recoveredCoords = JSON.parse(coordJson);
 console.log(
   `Roundtrip check: lon=${recoveredCoords.observer.lonDeg.toFixed(4)}°, ` +
-  `ecef.x=${recoveredCoords.ecef.x.toFixed(1)} m\n`
+    `ecef.x=${recoveredCoords.ecef.x.toFixed(1)} m\n`,
 );
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -131,7 +129,7 @@ const recoveredR = cartesianMagnitude(
   recoveredMars.heliocentric.z,
 );
 console.log(
-  `Roundtrip check: ${recoveredMars.name} @ JD ${recoveredMars.epoch.toFixed(1)}, r=${recoveredR.toFixed(6)} AU\n`
+  `Roundtrip check: ${recoveredMars.name} @ JD ${recoveredMars.epoch.toFixed(1)}, r=${recoveredR.toFixed(6)} AU\n`,
 );
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -161,7 +159,7 @@ console.log(targetsJson);
 const recoveredTargets = JSON.parse(targetsJson);
 console.log(
   `Roundtrip check: Mars target JD ${recoveredTargets.marsTarget.time.toFixed(1)}, ` +
-  `Moon target JD ${recoveredTargets.moonTarget.time.toFixed(1)}\n`
+    `Moon target JD ${recoveredTargets.moonTarget.time.toFixed(1)}\n`,
 );
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -170,7 +168,7 @@ console.log(
 line('5) STAR CATALOG');
 
 const catalogNames = listCatalogStars();
-const catalog = catalogNames.map(name => {
+const catalog = catalogNames.map((name) => {
   const star = Star.catalog(name);
   return {
     name: star.name,
@@ -184,12 +182,17 @@ const catalog = catalogNames.map(name => {
 });
 
 console.log(`Catalog has ${catalog.length} stars.`);
-console.log(`First 3: ${catalog.slice(0, 3).map(s => s.name).join(', ')}`);
+console.log(
+  `First 3: ${catalog
+    .slice(0, 3)
+    .map((s) => s.name)
+    .join(', ')}`,
+);
 
 const catalogJson = JSON.stringify(catalog, null, 2);
 const recoveredCatalog = JSON.parse(catalogJson);
 console.log(`Roundtrip check: ${recoveredCatalog.length} stars recovered`);
-console.log(`  Vega RA: ${recoveredCatalog.find(s => s.name === 'Vega').raDeg.toFixed(6)}°\n`);
+console.log(`  Vega RA: ${recoveredCatalog.find((s) => s.name === 'Vega').raDeg.toFixed(6)}°\n`);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 6) MOON PHASE SERIALIZATION
@@ -200,7 +203,9 @@ const phase = moonPhase(J2000);
 console.log(JSON.stringify(phase, null, 2));
 
 const recoveredPhase = JSON.parse(JSON.stringify(phase));
-console.log(`Roundtrip check: ${recoveredPhase.label}, k=${recoveredPhase.illuminatedFraction.toFixed(4)}\n`);
+console.log(
+  `Roundtrip check: ${recoveredPhase.label}, k=${recoveredPhase.illuminatedFraction.toFixed(4)}\n`,
+);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 7) FILE I/O

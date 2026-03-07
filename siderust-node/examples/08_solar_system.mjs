@@ -20,8 +20,6 @@ const {
   vsop87Heliocentric,
   vsop87Barycentric,
   vsop87SunBarycentric,
-  vsop87EarthHeliocentric,
-  vsop87EarthBarycentric,
   vsop87MoonGeocentric,
   transformPositionCenter,
   orbitalPeriodDays,
@@ -50,13 +48,15 @@ console.log(`Available bodies: ${bodies.join(', ')}`);
 // ─── 2) Planet constants and periods ──────────────────────────────────────
 line('2) PLANET CONSTANTS + ORBITAL PERIODS');
 const planets = ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune'];
-console.log(`${'Planet'.padEnd(10)} ${'a [AU]'.padStart(10)} ${'e'.padStart(10)} ${'Period [d]'.padStart(12)}`);
+console.log(
+  `${'Planet'.padEnd(10)} ${'a [AU]'.padStart(10)} ${'e'.padStart(10)} ${'Period [d]'.padStart(12)}`,
+);
 console.log('─'.repeat(46));
 for (const name of planets) {
   const p = getPlanet(name);
   const period = orbitalPeriodDays(name);
   console.log(
-    `${name.padEnd(10)} ${p.semiMajorAxisAu.toFixed(6).padStart(10)} ${p.eccentricity.toFixed(6).padStart(10)} ${period.toFixed(2).padStart(12)}`
+    `${name.padEnd(10)} ${p.semiMajorAxisAu.toFixed(6).padStart(10)} ${p.eccentricity.toFixed(6).padStart(10)} ${period.toFixed(2).padStart(12)}`,
   );
 }
 
@@ -71,7 +71,9 @@ const AU_TO_KM = 149597870.7;
 
 console.log(`Earth heliocentric distance: ${earthDist.toFixed(6)} AU`);
 console.log(`Mars heliocentric distance:  ${marsDist.toFixed(6)} AU`);
-console.log(`Earth-Mars separation:       ${earthMarsDist.toFixed(6)} AU (${(earthMarsDist * AU_TO_KM).toFixed(0)} km)`);
+console.log(
+  `Earth-Mars separation:       ${earthMarsDist.toFixed(6)} AU (${(earthMarsDist * AU_TO_KM).toFixed(0)} km)`,
+);
 
 const sunBary = vsop87SunBarycentric(J2000);
 const sunBaryDist = cartesianMagnitude(sunBary.x, sunBary.y, sunBary.z);
@@ -79,7 +81,14 @@ console.log(`Sun barycentric offset from SSB: ${sunBaryDist.toFixed(8)} AU`);
 
 // ─── 4) Center transforms ────────────────────────────────────────────────
 line('4) CENTER TRANSFORMS (HELIOCENTRIC -> GEOCENTRIC)');
-const marsGeo = transformPositionCenter(marsH.x, marsH.y, marsH.z, 'Heliocentric', 'Geocentric', J2000);
+const marsGeo = transformPositionCenter(
+  marsH.x,
+  marsH.y,
+  marsH.z,
+  'Heliocentric',
+  'Geocentric',
+  J2000,
+);
 const marsGeoDist = cartesianMagnitude(marsGeo.x, marsGeo.y, marsGeo.z);
 console.log(`Mars geocentric distance at J2000: ${marsGeoDist.toFixed(6)} AU`);
 console.log(`Mars geocentric distance at J2000: ${(marsGeoDist * AU_TO_KM).toFixed(0)} km`);
@@ -89,7 +98,9 @@ line('5) MOON');
 const moonGeo = vsop87MoonGeocentric(J2000);
 const moonDist = cartesianMagnitude(moonGeo.x, moonGeo.y, moonGeo.z);
 const moonDistAU = moonDist / AU_TO_KM;
-console.log(`Moon geocentric distance (ELP2000): ${moonDist.toFixed(1)} km (${moonDistAU.toFixed(6)} AU)`);
+console.log(
+  `Moon geocentric distance (ELP2000): ${moonDist.toFixed(1)} km (${moonDistAU.toFixed(6)} AU)`,
+);
 
 // ─── 6) Trait-based dispatch ─────────────────────────────────────────────
 line('6) HELIOCENTRIC vs BARYCENTRIC DISTANCES');
@@ -98,7 +109,9 @@ for (const name of ['Mercury', 'Venus', 'Earth', 'Mars']) {
   const bary = vsop87Barycentric(name, J2000);
   const hd = cartesianMagnitude(helio.x, helio.y, helio.z);
   const bd = cartesianMagnitude(bary.x, bary.y, bary.z);
-  console.log(`${name.padEnd(10)} helio=${hd.toFixed(5).padStart(9)}  bary=${bd.toFixed(5).padStart(9)}`);
+  console.log(
+    `${name.padEnd(10)} helio=${hd.toFixed(5).padStart(9)}  bary=${bd.toFixed(5).padStart(9)}`,
+  );
 }
 
 // ─── 7) Planet builder (JS equivalent) ───────────────────────────────────
@@ -124,11 +137,20 @@ const earthNow = vsop87Heliocentric('Earth', NOW_JD);
 const marsNow = vsop87Heliocentric('Mars', NOW_JD);
 const earthNowDist = cartesianMagnitude(earthNow.x, earthNow.y, earthNow.z);
 const marsNowDist = cartesianMagnitude(marsNow.x, marsNow.y, marsNow.z);
-const marsGeoNow = transformPositionCenter(marsNow.x, marsNow.y, marsNow.z, 'Heliocentric', 'Geocentric', NOW_JD);
+const marsGeoNow = transformPositionCenter(
+  marsNow.x,
+  marsNow.y,
+  marsNow.z,
+  'Heliocentric',
+  'Geocentric',
+  NOW_JD,
+);
 const marsGeoNowDist = cartesianMagnitude(marsGeoNow.x, marsGeoNow.y, marsGeoNow.z);
 
 console.log(`Earth-Sun distance: ${earthNowDist.toFixed(6)} AU`);
 console.log(`Mars-Sun distance:  ${marsNowDist.toFixed(6)} AU`);
-console.log(`Mars-Earth distance: ${marsGeoNowDist.toFixed(6)} AU (${(marsGeoNowDist * AU_TO_KM).toFixed(0)} km)`);
+console.log(
+  `Mars-Earth distance: ${marsGeoNowDist.toFixed(6)} AU (${(marsGeoNowDist * AU_TO_KM).toFixed(0)} km)`,
+);
 
 console.log('\n=== End of example ===');

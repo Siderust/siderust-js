@@ -25,7 +25,12 @@ const require = createRequire(import.meta.url);
 // ─── Load tempoch (from sibling package) ────────────────────────────────
 const tempochPath = join(
   dirname(fileURLToPath(import.meta.url)),
-  '..', '..', '..', 'tempoch-js', 'tempoch-node', 'index.js',
+  '..',
+  '..',
+  '..',
+  'tempoch-js',
+  'tempoch-node',
+  'index.js',
 );
 const tempoch = require(tempochPath);
 const { JulianDate, ModifiedJulianDate, Period } = tempoch;
@@ -34,17 +39,16 @@ const { JulianDate, ModifiedJulianDate, Period } = tempoch;
 // All conversions route through JD(TT), matching the Rust canonical path.
 
 // Key constants
-const J2000_JD = 2451545.0;         // J2000.0 epoch in JD
-const MJD_OFFSET = 2400000.5;       // JD = MJD + 2400000.5
-const UNIX_EPOCH_JD = 2440587.5;    // JD of Unix epoch (1970-01-01T00:00:00)
-const GPS_EPOCH_JD = 2444244.5;     // JD of GPS epoch (1980-01-06T00:00:00)
+const J2000_JD = 2451545.0; // J2000.0 epoch in JD
+const MJD_OFFSET = 2400000.5; // JD = MJD + 2400000.5
+const UNIX_EPOCH_JD = 2440587.5; // JD of Unix epoch (1970-01-01T00:00:00)
 const SECONDS_PER_DAY = 86400;
 
 // Offsets (seconds) at J2000.0 — simplified, constant-offset model
 // In reality TAI-UTC (leap seconds) is tabular; this uses the value at J2000.
-const TAI_TT_OFFSET_S = -32.184;    // TT = TAI + 32.184 s
-const TAI_UTC_OFFSET_S = 32;        // TAI - UTC = 32 s (at J2000)
-const GPS_TAI_OFFSET_S = -19;       // GPS = TAI - 19 s
+const TAI_TT_OFFSET_S = -32.184; // TT = TAI + 32.184 s
+const TAI_UTC_OFFSET_S = 32; // TAI - UTC = 32 s (at J2000)
+const GPS_TAI_OFFSET_S = -19; // GPS = TAI - 19 s
 
 // TDB ≈ TT for most purposes (the periodic term is < 1.7 ms)
 // TCG rate: dTCG/dTT = 1 + L_G where L_G = 6.969290134e-10
@@ -68,43 +72,64 @@ function jdToScale(jdTT, scale) {
   const secSinceJ2000 = daysSinceJ2000 * SECONDS_PER_DAY;
 
   switch (scale) {
-    case 'JD':   return jdTT;
-    case 'JDE':  return jdTT; // JDE ≡ JD(TDB) ≈ JD(TT)
-    case 'MJD':  return jdTT - MJD_OFFSET;
-    case 'TDB':  return jdTT; // TDB ≈ TT (< 1.7 ms periodic term ignored)
-    case 'TT':   return jdTT;
-    case 'TAI':  return jdTT + TAI_TT_OFFSET_S / SECONDS_PER_DAY;
-    case 'TCG':  return jdTT + L_G * secSinceJ2000 / SECONDS_PER_DAY;
-    case 'TCB':  return jdTT + L_B * secSinceJ2000 / SECONDS_PER_DAY;
-    case 'GPS':  return jdTT + (TAI_TT_OFFSET_S + GPS_TAI_OFFSET_S) / SECONDS_PER_DAY;
-    case 'Unix': return (jdTT - UNIX_EPOCH_JD) * SECONDS_PER_DAY
-                        + (TAI_TT_OFFSET_S - TAI_UTC_OFFSET_S);
-    case 'UT':   return jdTT - DELTA_T_J2000_S / SECONDS_PER_DAY;
-    default:     throw new Error(`Unknown scale: ${scale}`);
+    case 'JD':
+      return jdTT;
+    case 'JDE':
+      return jdTT; // JDE ≡ JD(TDB) ≈ JD(TT)
+    case 'MJD':
+      return jdTT - MJD_OFFSET;
+    case 'TDB':
+      return jdTT; // TDB ≈ TT (< 1.7 ms periodic term ignored)
+    case 'TT':
+      return jdTT;
+    case 'TAI':
+      return jdTT + TAI_TT_OFFSET_S / SECONDS_PER_DAY;
+    case 'TCG':
+      return jdTT + (L_G * secSinceJ2000) / SECONDS_PER_DAY;
+    case 'TCB':
+      return jdTT + (L_B * secSinceJ2000) / SECONDS_PER_DAY;
+    case 'GPS':
+      return jdTT + (TAI_TT_OFFSET_S + GPS_TAI_OFFSET_S) / SECONDS_PER_DAY;
+    case 'Unix':
+      return (jdTT - UNIX_EPOCH_JD) * SECONDS_PER_DAY + (TAI_TT_OFFSET_S - TAI_UTC_OFFSET_S);
+    case 'UT':
+      return jdTT - DELTA_T_J2000_S / SECONDS_PER_DAY;
+    default:
+      throw new Error(`Unknown scale: ${scale}`);
   }
 }
 
 /** Convert a scale value back to JD(TT). */
 function scaleToJd(value, scale) {
   switch (scale) {
-    case 'JD':   return value;
-    case 'JDE':  return value;
-    case 'MJD':  return value + MJD_OFFSET;
-    case 'TDB':  return value;
-    case 'TT':   return value;
-    case 'TAI':  return value - TAI_TT_OFFSET_S / SECONDS_PER_DAY;
+    case 'JD':
+      return value;
+    case 'JDE':
+      return value;
+    case 'MJD':
+      return value + MJD_OFFSET;
+    case 'TDB':
+      return value;
+    case 'TT':
+      return value;
+    case 'TAI':
+      return value - TAI_TT_OFFSET_S / SECONDS_PER_DAY;
     case 'TCG': {
       const approxDays = value - J2000_JD;
-      return value - L_G * approxDays * SECONDS_PER_DAY / SECONDS_PER_DAY;
+      return value - (L_G * approxDays * SECONDS_PER_DAY) / SECONDS_PER_DAY;
     }
     case 'TCB': {
       const approxDays = value - J2000_JD;
-      return value - L_B * approxDays * SECONDS_PER_DAY / SECONDS_PER_DAY;
+      return value - (L_B * approxDays * SECONDS_PER_DAY) / SECONDS_PER_DAY;
     }
-    case 'GPS':  return value - (TAI_TT_OFFSET_S + GPS_TAI_OFFSET_S) / SECONDS_PER_DAY;
-    case 'Unix': return (value - (TAI_TT_OFFSET_S - TAI_UTC_OFFSET_S)) / SECONDS_PER_DAY + UNIX_EPOCH_JD;
-    case 'UT':   return value + DELTA_T_J2000_S / SECONDS_PER_DAY;
-    default:     throw new Error(`Unknown scale: ${scale}`);
+    case 'GPS':
+      return value - (TAI_TT_OFFSET_S + GPS_TAI_OFFSET_S) / SECONDS_PER_DAY;
+    case 'Unix':
+      return (value - (TAI_TT_OFFSET_S - TAI_UTC_OFFSET_S)) / SECONDS_PER_DAY + UNIX_EPOCH_JD;
+    case 'UT':
+      return value + DELTA_T_J2000_S / SECONDS_PER_DAY;
+    default:
+      throw new Error(`Unknown scale: ${scale}`);
   }
 }
 
@@ -113,14 +138,14 @@ function printScale(label, value, referenceJd) {
   const driftS = (jdBack - referenceJd) * SECONDS_PER_DAY;
   const valueStr = typeof value === 'number' ? value.toFixed(9) : String(value);
   console.log(
-    `   ${label.padEnd(8)} value = ${valueStr.padStart(16)}  | JD roundtrip drift = ${driftS.toExponential(3).padStart(11)} s`
+    `   ${label.padEnd(8)} value = ${valueStr.padStart(16)}  | JD roundtrip drift = ${driftS.toExponential(3).padStart(11)} s`,
   );
 }
 
 function printPeriod(label, startVal, endVal) {
   const duration = endVal - startVal;
   console.log(
-    `   ${label.padEnd(8)} [${startVal.toFixed(9).padStart(16)} → ${endVal.toFixed(9).padStart(16)}]  Δ = ${duration.toFixed(9)} d`
+    `   ${label.padEnd(8)} [${startVal.toFixed(9).padStart(16)} → ${endVal.toFixed(9).padStart(16)}]  Δ = ${duration.toFixed(9)} d`,
   );
 }
 
@@ -175,8 +200,12 @@ line('3) Period representations and conversions');
 const period = new Period(mjd.value, mjd.value + 0.5);
 console.log(`   Period: ${period.format()}`);
 console.log(`   Duration: ${period.durationDays().toFixed(6)} days`);
-console.log(`   Contains MJD ${(mjd.value + 0.25).toFixed(3)}: ${period.contains(mjd.value + 0.25)}`);
-console.log(`   Contains MJD ${(mjd.value + 0.75).toFixed(3)}: ${period.contains(mjd.value + 0.75)}`);
+console.log(
+  `   Contains MJD ${(mjd.value + 0.25).toFixed(3)}: ${period.contains(mjd.value + 0.25)}`,
+);
+console.log(
+  `   Contains MJD ${(mjd.value + 0.75).toFixed(3)}: ${period.contains(mjd.value + 0.75)}`,
+);
 
 // Show the same period expressed in different scales
 const startJd = jdVal;
@@ -192,7 +221,7 @@ for (const scale of SCALES) {
 const utcStart = jd.toDate();
 const utcEnd = new JulianDate(jdVal + 0.5).toDate();
 console.log(
-  `   ${'UTC'.padEnd(8)} [${utcStart.toISOString()} → ${utcEnd.toISOString()}]  Δ = 0.500000 days (43200 s)`
+  `   ${'UTC'.padEnd(8)} [${utcStart.toISOString()} → ${utcEnd.toISOString()}]  Δ = 0.500000 days (43200 s)`,
 );
 
 // ─── 4) Period from Dates and back ─────────────────────────────────────
@@ -207,7 +236,9 @@ console.log(`   Duration: ${periodFromDates.durationDays().toFixed(6)} days`);
 
 // Convert back to UTC
 const { startMs, endMs } = periodFromDates.toUtc();
-console.log(`   Back to UTC: ${new Date(startMs).toISOString()} → ${new Date(endMs).toISOString()}`);
+console.log(
+  `   Back to UTC: ${new Date(startMs).toISOString()} → ${new Date(endMs).toISOString()}`,
+);
 
 // Start/end as MJD objects
 const startMjd = periodFromDates.start;
@@ -225,7 +256,9 @@ const overlap = p1.intersection(p2);
 console.log(`   P1: MJD ${p1.startMjd} → ${p1.endMjd}  (${p1.durationDays()} d)`);
 console.log(`   P2: MJD ${p2.startMjd} → ${p2.endMjd}  (${p2.durationDays()} d)`);
 if (overlap) {
-  console.log(`   P1 ∩ P2: MJD ${overlap.startMjd} → ${overlap.endMjd}  (${overlap.durationDays()} d)`);
+  console.log(
+    `   P1 ∩ P2: MJD ${overlap.startMjd} → ${overlap.endMjd}  (${overlap.durationDays()} d)`,
+  );
 } else {
   console.log('   P1 ∩ P2: no overlap');
 }

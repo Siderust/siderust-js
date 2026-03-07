@@ -105,9 +105,19 @@ line('4. CARTESIAN ↔ SPHERICAL (frame transforms)');
 const vegaDec = 38.78;
 const vegaRA = 279.23;
 const ecliptic = transformDirection(vegaDec, vegaRA, 'ICRS', 'EclipticMeanJ2000', J2000);
-console.log(`Vega ICRS -> Ecliptic: lon=${ecliptic.azimuthDeg.toFixed(4)}° lat=${ecliptic.polarDeg.toFixed(4)}°`);
-const back = transformDirection(ecliptic.polarDeg, ecliptic.azimuthDeg, 'EclipticMeanJ2000', 'ICRS', J2000);
-console.log(`Round-trip Ecliptic -> ICRS: RA=${back.azimuthDeg.toFixed(4)}° Dec=${back.polarDeg.toFixed(4)}°`);
+console.log(
+  `Vega ICRS -> Ecliptic: lon=${ecliptic.azimuthDeg.toFixed(4)}° lat=${ecliptic.polarDeg.toFixed(4)}°`,
+);
+const back = transformDirection(
+  ecliptic.polarDeg,
+  ecliptic.azimuthDeg,
+  'EclipticMeanJ2000',
+  'ICRS',
+  J2000,
+);
+console.log(
+  `Round-trip Ecliptic -> ICRS: RA=${back.azimuthDeg.toFixed(4)}° Dec=${back.polarDeg.toFixed(4)}°`,
+);
 console.log(`  ΔRA  = ${Math.abs(back.azimuthDeg - vegaRA).toExponential(2)}`);
 console.log(`  ΔDec = ${Math.abs(back.polarDeg - vegaDec).toExponential(2)}`);
 
@@ -117,8 +127,12 @@ console.log(`  ΔDec = ${Math.abs(back.polarDeg - vegaDec).toExponential(2)}`);
 line('5. TYPE SAFETY');
 
 const marsH = vsop87Heliocentric('Mars', J2000);
-console.log(`Mars (Heliocentric EclipticMeanJ2000): x=${marsH.x.toFixed(6)}, y=${marsH.y.toFixed(6)}, z=${marsH.z.toFixed(6)}`);
-console.log(`Moon (Geocentric  EclipticMeanJ2000):  x=${moon.x.toFixed(1)} km, y=${moon.y.toFixed(1)} km, z=${moon.z.toFixed(1)} km`);
+console.log(
+  `Mars (Heliocentric EclipticMeanJ2000): x=${marsH.x.toFixed(6)}, y=${marsH.y.toFixed(6)}, z=${marsH.z.toFixed(6)}`,
+);
+console.log(
+  `Moon (Geocentric  EclipticMeanJ2000):  x=${moon.x.toFixed(1)} km, y=${moon.y.toFixed(1)} km, z=${moon.z.toFixed(1)} km`,
+);
 console.log('\n  Positions carry frame + center metadata — check .frame and .center');
 console.log(`  Mars: frame="${marsH.frame}" center="${marsH.center}"`);
 console.log(`  Moon: frame="${moon.frame}" center="${moon.center}"`);

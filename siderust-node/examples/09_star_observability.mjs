@@ -78,7 +78,9 @@ for (const c of cross220) {
 // ── Final: intersect altitude periods with dark sky ──
 line('Combined with astronomical night (Sun < -18°');
 // We import the body functions to get astronomical night
-const { bodyBelowThreshold } = require(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.js'));
+const { bodyBelowThreshold } = require(
+  join(dirname(fileURLToPath(import.meta.url)), '..', 'index.js'),
+);
 const astroNight = bodyBelowThreshold('Sun', observer, mjd0, mjd1, -18);
 console.log(`  Astronomical night: ${astroNight.length} period(s)`);
 for (const p of astroNight) {
@@ -93,6 +95,8 @@ let totalHours = 0;
 for (const [idx, p] of observable.entries()) {
   const hours = (p.endMjd - p.startMjd) * 24;
   totalHours += hours;
-  console.log(`    ${idx + 1}. MJD ${p.startMjd.toFixed(5)} → ${p.endMjd.toFixed(5)}  (${hours.toFixed(2)} h)`);
+  console.log(
+    `    ${idx + 1}. MJD ${p.startMjd.toFixed(5)} → ${p.endMjd.toFixed(5)}  (${hours.toFixed(2)} h)`,
+  );
 }
 console.log(`\nTotal observable time: ${totalHours.toFixed(2)} h`);

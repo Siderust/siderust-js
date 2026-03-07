@@ -47,7 +47,6 @@ const line = (label = '') =>
 
 const J2000 = 2451545.0;
 const JULIAN_YEAR = 365.25;
-const JULIAN_CENTURY = 36525.0;
 const AU_TO_KM = 149_597_870.7;
 
 console.log('╔══════════════════════════════════════════════════╗');
@@ -81,7 +80,7 @@ line('2) Heliocentric vs Barycentric positions');
 const PLANETS = ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune'];
 
 console.log(
-  `  ${'Planet'.padEnd(10)} ${'r_helio [AU]'.padStart(14)} ${'r_bary [AU]'.padStart(14)} ${'Δ [km]'.padStart(14)}`
+  `  ${'Planet'.padEnd(10)} ${'r_helio [AU]'.padStart(14)} ${'r_bary [AU]'.padStart(14)} ${'Δ [km]'.padStart(14)}`,
 );
 console.log('  ' + '─'.repeat(54));
 
@@ -92,7 +91,7 @@ for (const name of PLANETS) {
   const rb = cartesianMagnitude(bary.x, bary.y, bary.z);
   const diff = cartesianDistance(helio.x, helio.y, helio.z, bary.x, bary.y, bary.z);
   console.log(
-    `  ${name.padEnd(10)} ${rh.toFixed(6).padStart(14)} ${rb.toFixed(6).padStart(14)} ${(diff * AU_TO_KM).toFixed(0).padStart(14)}`
+    `  ${name.padEnd(10)} ${rh.toFixed(6).padStart(14)} ${rb.toFixed(6).padStart(14)} ${(diff * AU_TO_KM).toFixed(0).padStart(14)}`,
   );
 }
 
@@ -105,20 +104,32 @@ const marsHelio = vsop87Heliocentric('Mars', J2000);
 console.log(`  Mars heliocentric ecliptic:  ${fmt(marsHelio)}`);
 
 const marsGeo = transformPositionCenter(
-  marsHelio.x, marsHelio.y, marsHelio.z,
-  'Heliocentric', 'Geocentric', J2000,
+  marsHelio.x,
+  marsHelio.y,
+  marsHelio.z,
+  'Heliocentric',
+  'Geocentric',
+  J2000,
 );
 console.log(`  Mars geocentric ecliptic:    ${fmt(marsGeo)}`);
 
 const marsGeoEq = transformPositionFrame(
-  marsGeo.x, marsGeo.y, marsGeo.z,
-  'EclipticMeanJ2000', 'EquatorialMeanJ2000', J2000,
+  marsGeo.x,
+  marsGeo.y,
+  marsGeo.z,
+  'EclipticMeanJ2000',
+  'EquatorialMeanJ2000',
+  J2000,
 );
 console.log(`  Mars geocentric equatorial:  ${fmt(marsGeoEq)}`);
 
 const marsGeoIcrs = transformPositionFrame(
-  marsGeo.x, marsGeo.y, marsGeo.z,
-  'EclipticMeanJ2000', 'ICRS', J2000,
+  marsGeo.x,
+  marsGeo.y,
+  marsGeo.z,
+  'EclipticMeanJ2000',
+  'ICRS',
+  J2000,
 );
 console.log(`  Mars geocentric ICRS:        ${fmt(marsGeoIcrs)}`);
 
@@ -159,7 +170,7 @@ for (let i = 0; i <= moonSteps; i++) {
   const pos = vsop87MoonGeocentric(jd);
   const r = cartesianMagnitude(pos.x, pos.y, pos.z);
   console.log(
-    `  ${day.toFixed(2).padEnd(8)} ${r.toFixed(1).padStart(14)} ${(r / AU_TO_KM).toFixed(6).padStart(14)}`
+    `  ${day.toFixed(2).padEnd(8)} ${r.toFixed(1).padStart(14)} ${(r / AU_TO_KM).toFixed(6).padStart(14)}`,
   );
 }
 

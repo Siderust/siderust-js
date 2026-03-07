@@ -27,10 +27,8 @@ const siderust = require(join(dirname(fileURLToPath(import.meta.url)), '..', 'in
 const {
   Star,
   vsop87Heliocentric,
-  vsop87Barycentric,
   vsop87SunBarycentric,
   vsop87EarthHeliocentric,
-  vsop87EarthBarycentric,
   vsop87MoonGeocentric,
   transformPositionCenter,
   transformPositionFrame,
@@ -78,12 +76,12 @@ class Target {
     }
     const dt = (jd - J2000) / JULIAN_YEAR; // Julian years since J2000
     const { muAlphaStar, muDelta } = this.properMotion; // mas/yr
-    const cosDec = Math.cos((this.position.decDeg ?? this.position.polarDeg) * Math.PI / 180);
+    const cosDec = Math.cos(((this.position.decDeg ?? this.position.polarDeg) * Math.PI) / 180);
 
-    const newRa = (this.position.raDeg ?? this.position.azimuthDeg)
-      + (muAlphaStar * MAS_TO_DEG / cosDec) * dt;
-    const newDec = (this.position.decDeg ?? this.position.polarDeg)
-      + (muDelta * MAS_TO_DEG) * dt;
+    const newRa =
+      (this.position.raDeg ?? this.position.azimuthDeg) +
+      ((muAlphaStar * MAS_TO_DEG) / cosDec) * dt;
+    const newDec = (this.position.decDeg ?? this.position.polarDeg) + muDelta * MAS_TO_DEG * dt;
 
     return { raDeg: newRa, decDeg: newDec };
   }
@@ -119,15 +117,6 @@ function trackMoon(jd) {
   return new Target(vsop87MoonGeocentric(jd), jd);
 }
 
-/** Track a catalog star at a given epoch → direction snapshot. */
-function trackStar(name, jd) {
-  const star = Star.catalog(name);
-  return new Target(
-    { raDeg: star.raDeg, decDeg: star.decDeg, frame: 'ICRS', center: 'Barycentric' },
-    jd,
-  );
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
 
 console.log('Target + Trackable examples');
@@ -138,16 +127,30 @@ line('1) Trackable objects (ICRS, star, Sun, planet, Moon)');
 
 // Fixed ICRS direction: time-invariant (like Rust Direction<ICRS>)
 const fixedIcrs = { polarDeg: 22.5, azimuthDeg: 120.0, frame: 'ICRS' };
-const fixedIcrsJd = transformDirection(fixedIcrs.polarDeg, fixedIcrs.azimuthDeg, 'ICRS', 'ICRS', J2000);
-const fixedIcrsNext = transformDirection(fixedIcrs.polarDeg, fixedIcrs.azimuthDeg, 'ICRS', 'ICRS', J2000 + 1);
+const fixedIcrsJd = transformDirection(
+  fixedIcrs.polarDeg,
+  fixedIcrs.azimuthDeg,
+  'ICRS',
+  'ICRS',
+  J2000,
+);
+const fixedIcrsNext = transformDirection(
+  fixedIcrs.polarDeg,
+  fixedIcrs.azimuthDeg,
+  'ICRS',
+  'ICRS',
+  J2000 + 1,
+);
 
 console.log(
-  `  ICRS direction is time-invariant: RA ${fixedIcrsJd.azimuthDeg.toFixed(3)} -> ${fixedIcrsNext.azimuthDeg.toFixed(3)}, Dec ${fixedIcrsJd.polarDeg.toFixed(3)} -> ${fixedIcrsNext.polarDeg.toFixed(3)}`
+  `  ICRS direction is time-invariant: RA ${fixedIcrsJd.azimuthDeg.toFixed(3)} -> ${fixedIcrsNext.azimuthDeg.toFixed(3)}, Dec ${fixedIcrsJd.polarDeg.toFixed(3)} -> ${fixedIcrsNext.polarDeg.toFixed(3)}`,
 );
 
 // Star
 const sirius = Star.catalog('Sirius');
-console.log(`  Sirius via Trackable: RA ${sirius.raDeg.toFixed(3)}, Dec ${sirius.decDeg.toFixed(3)}`);
+console.log(
+  `  Sirius via Trackable: RA ${sirius.raDeg.toFixed(3)}, Dec ${sirius.decDeg.toFixed(3)}`,
+);
 
 // Sun, Mars, Moon
 const sunTarget = trackSun(J2000);
@@ -186,22 +189,18 @@ const betelgeuseTarget = new Target(
 );
 
 console.log(
-  `  Betelgeuse-like target at J2000: RA ${betelgeuse.raDeg.toFixed(6)}, Dec ${betelgeuse.decDeg.toFixed(6)}`
+  `  Betelgeuse-like target at J2000: RA ${betelgeuse.raDeg.toFixed(6)}, Dec ${betelgeuse.decDeg.toFixed(6)}`,
 );
 
 // Propagate 25 years forward
 const jdFuture = J2000 + 25.0 * JULIAN_YEAR;
 const moved = betelgeuseTarget.propagate(jdFuture);
-console.log(
-  `  After 25 years: RA ${moved.raDeg.toFixed(6)}, Dec ${moved.decDeg.toFixed(6)}`
-);
+console.log(`  After 25 years: RA ${moved.raDeg.toFixed(6)}, Dec ${moved.decDeg.toFixed(6)}`);
 
 // Show the drift
 const dRa = (moved.raDeg - betelgeuse.raDeg) * 3_600_000; // to mas
 const dDec = (moved.decDeg - betelgeuse.decDeg) * 3_600_000;
-console.log(
-  `  Drift: ΔRA = ${dRa.toFixed(1)} mas, ΔDec = ${dDec.toFixed(1)} mas`
-);
+console.log(`  Drift: ΔRA = ${dRa.toFixed(1)} mas, ΔDec = ${dDec.toFixed(1)} mas`);
 
 // ─── 4) Target conversion across frame + center ────────────────────────
 line('4) Target conversion across frame + center');
@@ -209,12 +208,20 @@ line('4) Target conversion across frame + center');
 // Mars heliocentric ecliptic → geocentric equatorial J2000
 const marsHelio = vsop87Heliocentric('Mars', J2000);
 const marsGeo = transformPositionCenter(
-  marsHelio.x, marsHelio.y, marsHelio.z,
-  'Heliocentric', 'Geocentric', J2000,
+  marsHelio.x,
+  marsHelio.y,
+  marsHelio.z,
+  'Heliocentric',
+  'Geocentric',
+  J2000,
 );
 const marsGeoEq = transformPositionFrame(
-  marsGeo.x, marsGeo.y, marsGeo.z,
-  'EclipticMeanJ2000', 'EquatorialMeanJ2000', J2000,
+  marsGeo.x,
+  marsGeo.y,
+  marsGeo.z,
+  'EclipticMeanJ2000',
+  'EquatorialMeanJ2000',
+  J2000,
 );
 
 const marsHelioTarget = new Target(marsHelio, J2000);
@@ -228,7 +235,9 @@ line('5) Tracking Mars over 30 days');
 
 const steps = 7;
 const interval = 30 / steps;
-console.log(`  ${'Day'.padEnd(6)} ${'r [AU]'.padStart(12)} ${'x [AU]'.padStart(12)} ${'y [AU]'.padStart(12)} ${'z [AU]'.padStart(12)}`);
+console.log(
+  `  ${'Day'.padEnd(6)} ${'r [AU]'.padStart(12)} ${'x [AU]'.padStart(12)} ${'y [AU]'.padStart(12)} ${'z [AU]'.padStart(12)}`,
+);
 console.log('  ' + '─'.repeat(54));
 
 for (let i = 0; i <= steps; i++) {
@@ -237,7 +246,7 @@ for (let i = 0; i <= steps; i++) {
   const r = cartesianMagnitude(pos.x, pos.y, pos.z);
   const day = (i * interval).toFixed(1);
   console.log(
-    `  ${day.padEnd(6)} ${r.toFixed(6).padStart(12)} ${pos.x.toFixed(6).padStart(12)} ${pos.y.toFixed(6).padStart(12)} ${pos.z.toFixed(6).padStart(12)}`
+    `  ${day.padEnd(6)} ${r.toFixed(6).padStart(12)} ${pos.x.toFixed(6).padStart(12)} ${pos.y.toFixed(6).padStart(12)} ${pos.z.toFixed(6).padStart(12)}`,
   );
 }
 

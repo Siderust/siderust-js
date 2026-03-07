@@ -14,11 +14,9 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const require = createRequire(import.meta.url);
-const {
-  Observer,
-  bodyCrossings,
-  bodyBelowThreshold,
-} = require(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.js'));
+const { Observer, bodyCrossings, bodyBelowThreshold } = require(
+  join(dirname(fileURLToPath(import.meta.url)), '..', 'index.js'),
+);
 
 const line = (label = '') =>
   console.log(
@@ -33,16 +31,18 @@ const mjd1 = mjd0 + 7; // 1 week
 
 // Night-type thresholds (matching twilight definitions)
 const nightTypes = [
-  { name: 'Horizon',            threshold:   0.0 },
-  { name: 'Apparent Horizon',   threshold:  -0.833 },  // refraction-corrected
-  { name: 'Civil',              threshold:  -6.0 },
-  { name: 'Nautical',           threshold: -12.0 },
-  { name: 'Astronomical',       threshold: -18.0 },
+  { name: 'Horizon', threshold: 0.0 },
+  { name: 'Apparent Horizon', threshold: -0.833 }, // refraction-corrected
+  { name: 'Civil', threshold: -6.0 },
+  { name: 'Nautical', threshold: -12.0 },
+  { name: 'Astronomical', threshold: -18.0 },
 ];
 
 console.log('Night events over one week');
 console.log('==========================');
-console.log(`Site: lat=${obs.latDeg.toFixed(4)}° lon=${obs.lonDeg.toFixed(4)}° height=${obs.heightM} m`);
+console.log(
+  `Site: lat=${obs.latDeg.toFixed(4)}° lon=${obs.lonDeg.toFixed(4)}° height=${obs.heightM} m`,
+);
 console.log(`Week start: MJD ${mjd0}\n`);
 
 // ── 1) Night-type crossing events ──
@@ -52,7 +52,9 @@ for (const { name, threshold } of nightTypes) {
   let downs = 0;
   let raises = 0;
 
-  console.log(`${name.padEnd(18)} threshold ${threshold.toFixed(3).padStart(8)}° -> ${String(events.length).padStart(2)} crossing(s)`);
+  console.log(
+    `${name.padEnd(18)} threshold ${threshold.toFixed(3).padStart(8)}° -> ${String(events.length).padStart(2)} crossing(s)`,
+  );
 
   for (const ev of events) {
     if (ev.direction === 'setting') {
