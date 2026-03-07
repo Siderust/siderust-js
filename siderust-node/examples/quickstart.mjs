@@ -21,7 +21,9 @@ const {
 } = require(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.js'));
 
 const line = (label = '') =>
-  console.log(label ? `─── ${label} ${'─'.repeat(Math.max(0, 52 - label.length))}` : '─'.repeat(56));
+  console.log(
+    label ? `─── ${label} ${'─'.repeat(Math.max(0, 52 - label.length))}` : '─'.repeat(56),
+  );
 
 // ─── Version ──────────────────────────────────────────────────────────────
 line('Version');
@@ -31,9 +33,11 @@ console.log(`siderust-node v${version()}`);
 line('Observer');
 const obs = Observer.roqueDeLasMuchachos();
 console.log(obs.format());
-console.log(`  lon: ${obs.lonDeg.toFixed(4)}°  lat: ${obs.latDeg.toFixed(4)}°  height: ${obs.heightM} m`);
+console.log(
+  `  lon: ${obs.lonDeg.toFixed(4)}°  lat: ${obs.latDeg.toFixed(4)}°  height: ${obs.heightM} m`,
+);
 
-const custom = new Observer(-3.7038, 40.4168, 650);   // Madrid
+const custom = new Observer(-3.7038, 40.4168, 650); // Madrid
 console.log(`\nCustom observer: ${custom.format()}`);
 
 // ─── Available bodies & stars ──────────────────────────────────────────────
@@ -43,7 +47,7 @@ console.log(`Catalog stars: ${listCatalogStars().join(', ')}`);
 
 // ─── Sun altitude ─────────────────────────────────────────────────────────
 line('Sun altitude (single instant)');
-const mjd = 60000.0;  // 2023-02-25
+const mjd = 60000.0; // 2023-02-25
 const alt = bodyAltitudeAt('Sun', obs, mjd);
 console.log(`Sun altitude at MJD ${mjd}: ${alt.toFixed(4)}°`);
 

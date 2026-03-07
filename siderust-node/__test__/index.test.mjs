@@ -48,7 +48,7 @@ const {
 // ── Constants ──────────────────────────────────────────────────────────────
 const J2000_JD = 2_451_545.0;
 const MJD_START = 60_000.0; // 2023-02-25
-const MJD_END = 60_002.0;   // 2023-02-27
+const MJD_END = 60_002.0; // 2023-02-27
 
 // ═══════════════════════════════════════════════════════════════════════════
 // version
@@ -69,7 +69,7 @@ describe('Observer', () => {
   describe('constructor', () => {
     it('stores lon/lat/height', () => {
       const obs = new Observer(-17.89, 28.75, 2396.0);
-      assert.ok(Math.abs(obs.lonDeg - (-17.89)) < 1e-9);
+      assert.ok(Math.abs(obs.lonDeg - -17.89) < 1e-9);
       assert.ok(Math.abs(obs.latDeg - 28.75) < 1e-9);
       assert.ok(Math.abs(obs.heightM - 2396.0) < 1e-9);
     });
@@ -176,7 +176,7 @@ describe('Star', () => {
       assert.equal(s.name, 'TestStar');
       assert.ok(Math.abs(s.distanceLy - 100) < 1e-9);
       assert.ok(Math.abs(s.raDeg - 180) < 1e-9);
-      assert.ok(Math.abs(s.decDeg - (-45)) < 1e-9);
+      assert.ok(Math.abs(s.decDeg - -45) < 1e-9);
     });
   });
 
@@ -247,10 +247,7 @@ describe('bodyCrossings()', () => {
 
   it('validates window bounds', () => {
     const obs = Observer.roqueDeLasMuchachos();
-    assert.throws(
-      () => bodyCrossings('Sun', obs, MJD_END, MJD_START, 0.0),
-      /start.*before.*end/i,
-    );
+    assert.throws(() => bodyCrossings('Sun', obs, MJD_END, MJD_START, 0.0), /start.*before.*end/i);
   });
 });
 
@@ -259,7 +256,7 @@ describe('bodyCulminations()', () => {
     const obs = Observer.roqueDeLasMuchachos();
     const culms = bodyCulminations('Sun', obs, MJD_START, MJD_END);
     assert.ok(culms.length >= 2);
-    const kinds = culms.map(c => c.kind);
+    const kinds = culms.map((c) => c.kind);
     assert.ok(kinds.includes('max'));
     assert.ok(kinds.includes('min'));
   });
@@ -442,17 +439,20 @@ describe('transformDirection()', () => {
 
   it('EquatorialMeanJ2000 → EclipticMeanJ2000 produces valid output', () => {
     // Vega: RA=279.23°, Dec=38.78°
-    const dir = transformDirection(38.78, 279.23, 'EquatorialMeanJ2000', 'EclipticMeanJ2000', J2000_JD);
+    const dir = transformDirection(
+      38.78,
+      279.23,
+      'EquatorialMeanJ2000',
+      'EclipticMeanJ2000',
+      J2000_JD,
+    );
     assert.ok(Number.isFinite(dir.polarDeg));
     assert.ok(Number.isFinite(dir.azimuthDeg));
     assert.equal(dir.frame, 'EclipticMeanJ2000');
   });
 
   it('throws for unknown frame', () => {
-    assert.throws(
-      () => transformDirection(0, 0, 'Bogus', 'ICRS', J2000_JD),
-      /Unsupported/,
-    );
+    assert.throws(() => transformDirection(0, 0, 'Bogus', 'ICRS', J2000_JD), /Unsupported/);
   });
 });
 

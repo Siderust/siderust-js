@@ -20,7 +20,9 @@ const {
 } = require(join(dirname(fileURLToPath(import.meta.url)), '..', 'index.js'));
 
 const line = (label = '') =>
-  console.log(label ? `\n─── ${label} ${'─'.repeat(Math.max(0, 52 - label.length))}` : '─'.repeat(56));
+  console.log(
+    label ? `\n─── ${label} ${'─'.repeat(Math.max(0, 52 - label.length))}` : '─'.repeat(56),
+  );
 
 const J2000 = 2451545.0;
 
