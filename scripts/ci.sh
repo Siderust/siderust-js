@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PACKAGE_DIR="$ROOT_DIR/siderust-node"
+WEB_DIR="$ROOT_DIR/siderust-web"
 STEP="${1:-all}"
 
 run_install() {
@@ -39,6 +40,26 @@ run_coverage() {
   npm run test:coverage
 }
 
+# ── WASM (siderust-web) steps ─────────────────────────────────────────────
+
+run_web_build() {
+  cd "$WEB_DIR"
+  if [[ "${BUILD_MODE:-debug}" == "release" ]]; then
+    wasm-pack build --target web --out-dir pkg --release --scope siderust
+  else
+    wasm-pack build --target web --out-dir pkg --dev --scope siderust
+  fi
+}
+
+run_web_test() {
+  cd "$WEB_DIR"
+  if [[ -d "__test__" ]]; then
+    npm test
+  else
+    echo "No WASM tests yet — skipping"
+  fi
+}
+
 case "$STEP" in
   install)
     run_install
@@ -58,6 +79,16 @@ case "$STEP" in
   coverage)
     run_coverage
     ;;
+  web-build)
+    run_web_build
+    ;;
+  web-test)
+    run_web_test
+    ;;
+  web)
+    run_web_build
+    run_web_test
+    ;;
   all)
     run_install
     run_format
@@ -65,9 +96,11 @@ case "$STEP" in
     run_build
     run_test
     run_coverage
+    run_web_build
+    run_web_test
     ;;
   *)
-    echo "Usage: $0 [install|format|lint|build|test|coverage|all]" >&2
+    echo "Usage: $0 [install|format|lint|build|test|coverage|web-build|web-test|web|all]" >&2
     exit 1
     ;;
 esac
