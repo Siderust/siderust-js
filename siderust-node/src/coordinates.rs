@@ -135,6 +135,143 @@ pub fn geodetic_to_ecef(observer: &JsObserver) -> CartesianEcef {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Angular separation
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Compute the angular separation between two spherical directions (Vincenty formula).
+///
+/// Both directions must be in the same reference frame.
+///
+/// @param polar1Deg   — Declination / polar angle of first direction in degrees.
+/// @param azimuth1Deg — RA / azimuth of first direction in degrees.
+/// @param polar2Deg   — Declination / polar angle of second direction in degrees.
+/// @param azimuth2Deg — RA / azimuth of second direction in degrees.
+/// @param frame       — Reference frame (both directions must share the same frame).
+/// @returns Angular separation in degrees.
+///
+/// ```js
+/// const { angularSeparation } = require('@siderust/siderust');
+/// const sep = angularSeparation(89.26, 37.95, -16.72, 101.29, 'EquatorialMeanJ2000');
+/// ```
+#[napi(js_name = "angularSeparation")]
+pub fn angular_separation(
+    polar1_deg: f64,
+    azimuth1_deg: f64,
+    polar2_deg: f64,
+    azimuth2_deg: f64,
+    frame: String,
+) -> napi::Result<f64> {
+    if !polar1_deg.is_finite()
+        || !azimuth1_deg.is_finite()
+        || !polar2_deg.is_finite()
+        || !azimuth2_deg.is_finite()
+    {
+        return Err(napi::Error::from_reason(
+            "All angle parameters must be finite",
+        ));
+    }
+
+    // Angular separation only depends on the geometry, not the specific frame type,
+    // but we dispatch to maintain type correctness.
+    let sep = match frame.as_str() {
+        "ICRS" => {
+            let d1 = spherical::Direction::<ICRS>::new(
+                Degrees::new(azimuth1_deg),
+                Degrees::new(polar1_deg),
+            );
+            let d2 = spherical::Direction::<ICRS>::new(
+                Degrees::new(azimuth2_deg),
+                Degrees::new(polar2_deg),
+            );
+            d1.angular_separation(&d2)
+        }
+        "EclipticMeanJ2000" => {
+            let d1 = spherical::Direction::<EclipticMeanJ2000>::new(
+                Degrees::new(azimuth1_deg),
+                Degrees::new(polar1_deg),
+            );
+            let d2 = spherical::Direction::<EclipticMeanJ2000>::new(
+                Degrees::new(azimuth2_deg),
+                Degrees::new(polar2_deg),
+            );
+            d1.angular_separation(&d2)
+        }
+        "EquatorialMeanJ2000" => {
+            let d1 = spherical::Direction::<EquatorialMeanJ2000>::new(
+                Degrees::new(azimuth1_deg),
+                Degrees::new(polar1_deg),
+            );
+            let d2 = spherical::Direction::<EquatorialMeanJ2000>::new(
+                Degrees::new(azimuth2_deg),
+                Degrees::new(polar2_deg),
+            );
+            d1.angular_separation(&d2)
+        }
+        _ => {
+            return Err(napi::Error::from_reason(format!(
+                "Unsupported frame for angular separation: \"{frame}\". Valid: ICRS, EclipticMeanJ2000, EquatorialMeanJ2000."
+            )));
+        }
+    };
+    Ok(sep.value())
+}
+
+/// Compute the Euclidean distance between two 3D Cartesian positions.
+///
+/// The positions must be in the same frame and center. Units follow input.
+///
+/// @returns Distance in the same units as the input coordinates.
+#[napi(js_name = "cartesianDistance")]
+pub fn cartesian_distance(
+    x1: f64,
+    y1: f64,
+    z1: f64,
+    x2: f64,
+    y2: f64,
+    z2: f64,
+) -> f64 {
+    let dx = x2 - x1;
+    let dy = y2 - y1;
+    let dz = z2 - z1;
+    (dx * dx + dy * dy + dz * dz).sqrt()
+}
+
+/// Compute the magnitude (distance from origin) of a 3D Cartesian vector.
+///
+/// @returns Distance from origin in the same units.
+#[napi(js_name = "cartesianMagnitude")]
+pub fn cartesian_magnitude(x: f64, y: f64, z: f64) -> f64 {
+    (x * x + y * y + z * z).sqrt()
+}
+
+/// Compute the dot product of two 3D Cartesian vectors.
+///
+/// @returns The scalar dot product.
+#[napi(js_name = "dotProduct")]
+pub fn dot_product(x1: f64, y1: f64, z1: f64, x2: f64, y2: f64, z2: f64) -> f64 {
+    x1 * x2 + y1 * y2 + z1 * z2
+}
+
+/// Convert a direction (unit vector) from spherical to Cartesian.
+///
+/// @param polarDeg   — Declination / polar angle in degrees.
+/// @param azimuthDeg — RA / azimuth in degrees.
+/// @returns `{ x, y, z }` unit vector.
+#[napi(js_name = "directionToCartesian")]
+pub fn direction_to_cartesian(polar_deg: f64, azimuth_deg: f64) -> CartesianEcef {
+    let d = spherical::Direction::<ICRS>::new(
+        Degrees::new(azimuth_deg),
+        Degrees::new(polar_deg),
+    );
+    let c = d.to_cartesian();
+    CartesianEcef {
+        x: c.x(),
+        y: c.y(),
+        z: c.z(),
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Internal helpers
 // ─────────────────────────────────────────────────────────────────────────────
 

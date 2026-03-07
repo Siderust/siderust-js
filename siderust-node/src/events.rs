@@ -479,3 +479,99 @@ pub fn star_below_threshold(
         opts,
     )))
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Star azimuth — batch events
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Find azimuth-crossing events for a star.
+///
+/// @param bearingDeg — Target azimuth bearing in degrees.
+/// @returns Array of azimuth crossing events `{ mjd, direction }`.
+#[napi(js_name = "starAzimuthCrossings")]
+pub fn star_azimuth_crossings(
+    star: &JsStar,
+    observer: &JsObserver,
+    start_mjd: f64,
+    end_mjd: f64,
+    bearing_deg: f64,
+) -> napi::Result<Vec<AzimuthCrossingEvent>> {
+    let window = make_window(start_mjd, end_mjd)?;
+    let bearing = Degrees::new(bearing_deg);
+    let opts = SearchOpts::default();
+    Ok(convert_az_crossings(azimuth::azimuth_crossings(
+        &star.inner,
+        &observer.inner,
+        window,
+        bearing,
+        opts,
+    )))
+}
+
+/// Find azimuth extrema (max/min bearing) for a star.
+///
+/// @returns Array of azimuth extrema `{ mjd, azimuthDeg, kind }`.
+#[napi(js_name = "starAzimuthExtrema")]
+pub fn star_azimuth_extrema(
+    star: &JsStar,
+    observer: &JsObserver,
+    start_mjd: f64,
+    end_mjd: f64,
+) -> napi::Result<Vec<AzimuthExtremum>> {
+    let window = make_window(start_mjd, end_mjd)?;
+    let opts = SearchOpts::default();
+    Ok(convert_az_extrema(azimuth::azimuth_extrema(
+        &star.inner,
+        &observer.inner,
+        window,
+        opts,
+    )))
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Period utilities
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Intersect two lists of MJD periods, returning only overlapping intervals.
+///
+/// This is useful for combining altitude and azimuth constraints, or
+/// combining target visibility with astronomical night periods.
+///
+/// @param periods1 — First list of MJD periods.
+/// @param periods2 — Second list of MJD periods.
+/// @returns Array of MJD periods representing the intersection.
+///
+/// ```js
+/// const altPeriods = starAboveThreshold(star, obs, mjd0, mjd1, 25);
+/// const azPeriods = bodyAboveThreshold('Sun', obs, mjd0, mjd1, -18); // dark sky
+/// const observable = intersectPeriods(altPeriods, azPeriods);
+/// ```
+#[napi(js_name = "intersectPeriods")]
+pub fn intersect_periods_js(
+    periods1: Vec<MjdPeriod>,
+    periods2: Vec<MjdPeriod>,
+) -> Vec<MjdPeriod> {
+    let p1: Vec<Period<MJD>> = periods1
+        .iter()
+        .map(|p| Period::new(
+            ModifiedJulianDate::new(p.start_mjd),
+            ModifiedJulianDate::new(p.end_mjd),
+        ))
+        .collect();
+    let p2: Vec<Period<MJD>> = periods2
+        .iter()
+        .map(|p| Period::new(
+            ModifiedJulianDate::new(p.start_mjd),
+            ModifiedJulianDate::new(p.end_mjd),
+        ))
+        .collect();
+
+    let result = tempoch::intersect_periods(&p1, &p2);
+    result
+        .into_iter()
+        .map(|p| MjdPeriod {
+            start_mjd: p.start.value(),
+            end_mjd: p.end.value(),
+        })
+        .collect()
+}

@@ -310,19 +310,27 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { getPlanet, listBodies, transformDirection, directionToHorizontal, geodeticToEcef, vsop87Heliocentric, vsop87Barycentric, vsop87SunBarycentric, vsop87EarthBarycentric, vsop87EarthHeliocentric, vsop87MoonGeocentric, bodyAltitudeAt, bodyAzimuthAt, bodyCrossings, bodyCulminations, bodyAboveThreshold, bodyBelowThreshold, bodyAzimuthCrossings, bodyAzimuthExtrema, starAltitudeAt, starAzimuthAt, starCrossings, starCulminations, starAboveThreshold, starBelowThreshold, Observer, moonPhase, moonPhaseTopocentric, findPhaseEvents, moonIlluminationAbove, moonIlluminationBelow, moonIlluminationRange, Star, listCatalogStars, version } = nativeBinding
+const { getPlanet, listBodies, transformDirection, directionToHorizontal, geodeticToEcef, angularSeparation, cartesianDistance, cartesianMagnitude, dotProduct, directionToCartesian, vsop87Heliocentric, vsop87Barycentric, vsop87SunBarycentric, vsop87EarthBarycentric, vsop87EarthHeliocentric, vsop87MoonGeocentric, transformPositionCenter, transformPositionFrame, orbitalPeriodDays, bodyAltitudeAt, bodyAzimuthAt, bodyCrossings, bodyCulminations, bodyAboveThreshold, bodyBelowThreshold, bodyAzimuthCrossings, bodyAzimuthExtrema, starAltitudeAt, starAzimuthAt, starCrossings, starCulminations, starAboveThreshold, starBelowThreshold, starAzimuthCrossings, starAzimuthExtrema, intersectPeriods, Observer, moonPhase, moonPhaseTopocentric, findPhaseEvents, moonIlluminationAbove, moonIlluminationBelow, moonIlluminationRange, Star, listCatalogStars, version } = nativeBinding
 
 module.exports.getPlanet = getPlanet
 module.exports.listBodies = listBodies
 module.exports.transformDirection = transformDirection
 module.exports.directionToHorizontal = directionToHorizontal
 module.exports.geodeticToEcef = geodeticToEcef
+module.exports.angularSeparation = angularSeparation
+module.exports.cartesianDistance = cartesianDistance
+module.exports.cartesianMagnitude = cartesianMagnitude
+module.exports.dotProduct = dotProduct
+module.exports.directionToCartesian = directionToCartesian
 module.exports.vsop87Heliocentric = vsop87Heliocentric
 module.exports.vsop87Barycentric = vsop87Barycentric
 module.exports.vsop87SunBarycentric = vsop87SunBarycentric
 module.exports.vsop87EarthBarycentric = vsop87EarthBarycentric
 module.exports.vsop87EarthHeliocentric = vsop87EarthHeliocentric
 module.exports.vsop87MoonGeocentric = vsop87MoonGeocentric
+module.exports.transformPositionCenter = transformPositionCenter
+module.exports.transformPositionFrame = transformPositionFrame
+module.exports.orbitalPeriodDays = orbitalPeriodDays
 module.exports.bodyAltitudeAt = bodyAltitudeAt
 module.exports.bodyAzimuthAt = bodyAzimuthAt
 module.exports.bodyCrossings = bodyCrossings
@@ -337,6 +345,9 @@ module.exports.starCrossings = starCrossings
 module.exports.starCulminations = starCulminations
 module.exports.starAboveThreshold = starAboveThreshold
 module.exports.starBelowThreshold = starBelowThreshold
+module.exports.starAzimuthCrossings = starAzimuthCrossings
+module.exports.starAzimuthExtrema = starAzimuthExtrema
+module.exports.intersectPeriods = intersectPeriods
 module.exports.Observer = Observer
 module.exports.moonPhase = moonPhase
 module.exports.moonPhaseTopocentric = moonPhaseTopocentric

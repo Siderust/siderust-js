@@ -83,6 +83,52 @@ export declare function directionToHorizontal(polarDeg: number, azimuthDeg: numb
  * @returns `{ x, y, z }` in metres.
  */
 export declare function geodeticToEcef(observer: JsObserver): CartesianEcef
+/**
+ * Compute the angular separation between two spherical directions (Vincenty formula).
+ *
+ * Both directions must be in the same reference frame.
+ *
+ * @param polar1Deg   — Declination / polar angle of first direction in degrees.
+ * @param azimuth1Deg — RA / azimuth of first direction in degrees.
+ * @param polar2Deg   — Declination / polar angle of second direction in degrees.
+ * @param azimuth2Deg — RA / azimuth of second direction in degrees.
+ * @param frame       — Reference frame (both directions must share the same frame).
+ * @returns Angular separation in degrees.
+ *
+ * ```js
+ * const { angularSeparation } = require('@siderust/siderust');
+ * const sep = angularSeparation(89.26, 37.95, -16.72, 101.29, 'EquatorialMeanJ2000');
+ * ```
+ */
+export declare function angularSeparation(polar1Deg: number, azimuth1Deg: number, polar2Deg: number, azimuth2Deg: number, frame: string): number
+/**
+ * Compute the Euclidean distance between two 3D Cartesian positions.
+ *
+ * The positions must be in the same frame and center. Units follow input.
+ *
+ * @returns Distance in the same units as the input coordinates.
+ */
+export declare function cartesianDistance(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number): number
+/**
+ * Compute the magnitude (distance from origin) of a 3D Cartesian vector.
+ *
+ * @returns Distance from origin in the same units.
+ */
+export declare function cartesianMagnitude(x: number, y: number, z: number): number
+/**
+ * Compute the dot product of two 3D Cartesian vectors.
+ *
+ * @returns The scalar dot product.
+ */
+export declare function dotProduct(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number): number
+/**
+ * Convert a direction (unit vector) from spherical to Cartesian.
+ *
+ * @param polarDeg   — Declination / polar angle in degrees.
+ * @param azimuthDeg — RA / azimuth in degrees.
+ * @returns `{ x, y, z }` unit vector.
+ */
+export declare function directionToCartesian(polarDeg: number, azimuthDeg: number): CartesianEcef
 /** A 3D Cartesian position with frame and center metadata. */
 export interface CartesianPosition {
   /** X coordinate (AU for solar-system, km for Moon geocentric). */
@@ -150,6 +196,46 @@ export declare function vsop87EarthHeliocentric(jd: number): CartesianPosition
  * @returns Cartesian position in **km** (EclipticMeanJ2000, Geocentric).
  */
 export declare function vsop87MoonGeocentric(jd: number): CartesianPosition
+/**
+ * Transform a Cartesian position from one reference center to another.
+ *
+ * Stays in the EclipticMeanJ2000 frame (the natural VSOP87 frame).
+ * Units are AU (except Geocentric Moon which is km).
+ *
+ * Supported center pairs: Heliocentric ↔ Geocentric, Heliocentric ↔ Barycentric,
+ * Geocentric ↔ Barycentric.
+ *
+ * @param x, y, z       — Cartesian coordinates.
+ * @param srcCenter      — Source center: `"Heliocentric"`, `"Barycentric"`, `"Geocentric"`.
+ * @param dstCenter      — Destination center.
+ * @param jd             — Julian Date.
+ *
+ * ```js
+ * const mars = vsop87Heliocentric('Mars', 2451545.0);
+ * const marsGeo = transformPositionCenter(mars.x, mars.y, mars.z, 'Heliocentric', 'Geocentric', 2451545.0);
+ * ```
+ */
+export declare function transformPositionCenter(x: number, y: number, z: number, srcCenter: string, dstCenter: string, jd: number): CartesianPosition
+/**
+ * Transform a Cartesian position between celestial reference frames.
+ *
+ * Stays in the same center. Coordinates are in AU.
+ *
+ * Supported frames: `"ICRS"`, `"EclipticMeanJ2000"`, `"EquatorialMeanJ2000"`.
+ *
+ * @param x, y, z    — Cartesian coordinates in AU.
+ * @param srcFrame    — Source frame name.
+ * @param dstFrame    — Destination frame name.
+ * @param jd          — Julian Date.
+ */
+export declare function transformPositionFrame(x: number, y: number, z: number, srcFrame: string, dstFrame: string, jd: number): CartesianPosition
+/**
+ * Compute the orbital period of a named planet in days (Keplerian).
+ *
+ * @param name — Planet name.
+ * @returns Orbital period in days.
+ */
+export declare function orbitalPeriodDays(name: string): number
 /** A threshold-crossing event (rise or set). */
 export interface CrossingEvent {
   /** Time of the crossing (Modified Julian Date). */
@@ -272,6 +358,36 @@ export declare function starCulminations(star: JsStar, observer: JsObserver, sta
 export declare function starAboveThreshold(star: JsStar, observer: JsObserver, startMjd: number, endMjd: number, thresholdDeg: number): Array<MjdPeriod>
 /** Find periods where a star's altitude is below a threshold. */
 export declare function starBelowThreshold(star: JsStar, observer: JsObserver, startMjd: number, endMjd: number, thresholdDeg: number): Array<MjdPeriod>
+/**
+ * Find azimuth-crossing events for a star.
+ *
+ * @param bearingDeg — Target azimuth bearing in degrees.
+ * @returns Array of azimuth crossing events `{ mjd, direction }`.
+ */
+export declare function starAzimuthCrossings(star: JsStar, observer: JsObserver, startMjd: number, endMjd: number, bearingDeg: number): Array<AzimuthCrossingEvent>
+/**
+ * Find azimuth extrema (max/min bearing) for a star.
+ *
+ * @returns Array of azimuth extrema `{ mjd, azimuthDeg, kind }`.
+ */
+export declare function starAzimuthExtrema(star: JsStar, observer: JsObserver, startMjd: number, endMjd: number): Array<AzimuthExtremum>
+/**
+ * Intersect two lists of MJD periods, returning only overlapping intervals.
+ *
+ * This is useful for combining altitude and azimuth constraints, or
+ * combining target visibility with astronomical night periods.
+ *
+ * @param periods1 — First list of MJD periods.
+ * @param periods2 — Second list of MJD periods.
+ * @returns Array of MJD periods representing the intersection.
+ *
+ * ```js
+ * const altPeriods = starAboveThreshold(star, obs, mjd0, mjd1, 25);
+ * const azPeriods = bodyAboveThreshold('Sun', obs, mjd0, mjd1, -18); // dark sky
+ * const observable = intersectPeriods(altPeriods, azPeriods);
+ * ```
+ */
+export declare function intersectPeriods(periods1: Array<MjdPeriod>, periods2: Array<MjdPeriod>): Array<MjdPeriod>
 /** Moon phase geometry at a single instant. */
 export interface MoonPhase {
   /** Phase angle in degrees (Sun-Moon-Earth/observer angle). */
