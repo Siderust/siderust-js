@@ -1,21 +1,20 @@
 /* eslint-disable */
 
+import { Quantity } from '@siderust/qtty-web';
+
 // ─── Initialisation ────────────────────────────────────────────────────────
 /**
  * Initialise the WASM module.  Must be called (and `await`-ed) before any
  * other function in this package.
  *
- * For bundlers (Webpack / Vite / Rollup) the WASM binary is resolved
- * automatically.  For static hosting pass the URL to the `.wasm` file:
- *
  * ```js
- * import init, { Observer, bodyAltitudeAt } from '@siderust/siderust-web';
+ * import { init, Observer, bodyAltitudeAt } from '@siderust/siderust-web';
  * await init();                          // bundler
  * await init('./siderust_web_bg.wasm');  // static / GitHub Pages
  * ```
  */
-export default function init(
-  module_or_path?: { module_or_path: RequestInfo | URL | Response | BufferSource | WebAssembly.Module } | RequestInfo | URL | Response | BufferSource | WebAssembly.Module
+export function init(
+  module_or_path?: RequestInfo | URL | Response | BufferSource | WebAssembly.Module
 ): Promise<void>;
 
 // ─── Scalar types ──────────────────────────────────────────────────────────
@@ -105,13 +104,15 @@ export interface PhaseEvent {
 /**
  * A geodetic observer location on the Earth's surface (WGS84 ellipsoid).
  *
+ * Constructor accepts `Quantity` objects or raw numbers.
+ *
  * ```js
  * const obs = new Observer(-17.8925, 28.7543, 2396);
  * const orm = Observer.roqueDeLasMuchachos();
  * ```
  */
 export class Observer {
-  constructor(lonDeg: number, latDeg: number, heightM: number);
+  constructor(lon: Quantity | number, lat: Quantity | number, height: Quantity | number);
   static roqueDeLasMuchachos(): Observer;
   static elParanal(): Observer;
   static maunaKea(): Observer;
@@ -119,8 +120,10 @@ export class Observer {
   get lonDeg(): number;
   get latDeg(): number;
   get heightM(): number;
+  get lon(): Quantity;
+  get lat(): Quantity;
+  get height(): Quantity;
   format(): string;
-  free(): void;
 }
 
 // ─── Star class ────────────────────────────────────────────────────────────
@@ -151,8 +154,13 @@ export class Star {
   get luminositySolar(): number;
   get raDeg(): number;
   get decDeg(): number;
+  get distance(): Quantity;
+  get mass(): Quantity;
+  get radius(): Quantity;
+  get luminosity(): Quantity;
+  get ra(): Quantity;
+  get dec(): Quantity;
   format(): string;
-  free(): void;
 }
 
 // ─── Bodies ────────────────────────────────────────────────────────────────

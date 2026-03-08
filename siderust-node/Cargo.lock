@@ -627,6 +627,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "siderust-binding-core"
+version = "0.1.0"
+dependencies = [
+ "affn",
+ "chrono",
+ "qtty",
+ "siderust",
+ "tempoch",
+]
+
+[[package]]
 name = "siderust-node"
 version = "0.1.0"
 dependencies = [
@@ -637,6 +648,7 @@ dependencies = [
  "napi-derive",
  "qtty",
  "siderust",
+ "siderust-binding-core",
  "tempoch",
 ]
 

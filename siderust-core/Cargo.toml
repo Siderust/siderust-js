@@ -1,34 +1,23 @@
 [package]
-name = "siderust-node"
+name = "siderust-binding-core"
 version = "0.1.0"
 edition = "2021"
 authors = ["VPRamon <vallespuigramon@gmail.com>"]
 license = "AGPL-3.0"
 repository = "https://github.com/Siderust/siderust"
-description = "Node.js native bindings for siderust — high-precision astronomy and satellite mechanics"
-readme = "README.md"
+description = "Shared binding logic for siderust JavaScript adapters"
 
 [lib]
-crate-type = ["cdylib"]
+name = "siderust_binding_core"
 
 [dependencies]
 siderust = { path = "../../../rust/siderust", features = [] }
-siderust-binding-core = { path = "../siderust-core" }
 qtty     = "0.4.0"
 tempoch  = "0.3"
 affn     = { version = "0.3.3", features = ["astro"] }
 chrono   = "0.4"
-napi     = { version = "2", features = ["napi6"] }
-napi-derive = "2"
-
-[build-dependencies]
-napi-build = "2"
 
 [patch.crates-io]
 affn    = { path = "../../../rust/affn" }
 cheby   = { path = "../../../rust/siderust/dev-deps/cheby" }
 tempoch = { path = "../../../rust/tempoch/tempoch" }
-
-[profile.release]
-lto = true
-strip = "symbols"

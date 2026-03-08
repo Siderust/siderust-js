@@ -1,6 +1,6 @@
 {
   "name": "@siderust/siderust",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "High-precision astronomy for Node.js — observer setup, celestial body tracking, altitude/azimuth events, coordinate transforms, ephemerides, and lunar phases. Powered by Rust.",
   "main": "index.js",
   "types": "index.d.ts",
@@ -24,6 +24,8 @@
   "files": [
     "index.js",
     "index.d.ts",
+    "native.cjs",
+    "lib/",
     "examples/",
     "README.md"
   ],
@@ -45,6 +47,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Siderust/siderust"
+  },
+  "dependencies": {
+    "@siderust/qtty": "^1.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
