@@ -1,43 +1,31 @@
 # GitHub Pages Example
 
-A minimal static page that loads Siderust via WebAssembly and runs
-astronomy computations entirely in the browser.
+This demo goes through the public `@siderust/siderust-web` API and uses
+`@siderust/qtty-web` plus `@siderust/tempoch-web` explicitly for typed
+inputs.
 
-## Serving locally
-
-1. Build the WASM package from the repo root:
-
-```bash
-cd siderust-web
-npm run build        # or: wasm-pack build --target web --out-dir pkg --release
-```
-
-2. Serve this directory with any static file server:
+## Build the local packages
 
 ```bash
-# Python
-python3 -m http.server 8080 --directory .
+cd ../../../qtty-js/qtty-web
+npm run build
 
-# Node.js (npx)
-npx serve .
+cd ../../tempoch-js/tempoch-web
+npm run build
+
+cd ../../siderust-js/siderust-web
+npm run build
 ```
 
-3. Open <http://localhost:8080/examples/github-pages/index.html>
+## Serve the example
 
-## Deploying to GitHub Pages
+From `javascript/siderust-js/siderust-web/examples/github-pages`:
 
-Copy the contents of `pkg/` and `examples/github-pages/` into your
-GitHub Pages directory.  The `index.html` expects the import path
-`../../pkg/siderust_web.js` — adjust if your directory layout differs.
+```bash
+python3 -m http.server 8080
+```
 
-GitHub Pages serves `.wasm` files with the correct MIME type
-(`application/wasm`) by default, so no extra configuration is needed.
+Then open <http://localhost:8080/index.html>.
 
-## What the demo shows
-
-- Observatory selector (four preset locations)
-- Real-time Sun altitude and azimuth
-- Current Moon phase and illumination
-- Heliocentric positions of all eight planets
-- Catalog star altitudes at your chosen observatory
-- Horizon-crossing events for the Sun (next 24 hours)
+The page uses an `importmap` that points at the sibling `qtty-web`,
+`tempoch-web`, and `siderust-web` packages in this workspace.

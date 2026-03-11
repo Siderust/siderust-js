@@ -7,42 +7,38 @@
  * @module @siderust/siderust-web/lib/Star
  */
 
-import { Quantity } from '@siderust/qtty-web';
-import * as backend from './backend.js';
+import { Quantity } from "@siderust/qtty-web";
+import * as backend from "./backend.js";
 
 export class Star {
   /**
    * Create a custom star.
    *
    * @param {string} name         Display name
-   * @param {number} distanceLy   Distance in light-years
-   * @param {number} massSolar    Mass in solar masses (M☉)
-   * @param {number} radiusSolar  Radius in solar radii (R☉)
-   * @param {number} luminositySolar Luminosity in solar luminosities (L☉)
-   * @param {number} raDeg        Right ascension at J2000.0 in degrees
-   * @param {number} decDeg       Declination at J2000.0 in degrees
+   * @param {Quantity} distance   Distance, convertible to LightYear
+   * @param {Quantity} mass       Mass, convertible to SolarMass
+   * @param {Quantity} radius     Radius, convertible to NominalSolarRadius
+   * @param {Quantity} luminosity Luminosity, convertible to SolarLuminosity
+   * @param {Quantity} ra         Right ascension, convertible to Degree
+   * @param {Quantity} dec        Declination, convertible to Degree
    */
-  constructor(name, distanceLy, massSolar, radiusSolar, luminositySolar, raDeg, decDeg) {
-    for (const [label, v] of [
-      ['distanceLy', distanceLy],
-      ['massSolar', massSolar],
-      ['radiusSolar', radiusSolar],
-      ['luminositySolar', luminositySolar],
-      ['raDeg', raDeg],
-      ['decDeg', decDeg],
-    ]) {
-      if (typeof v !== 'number' || !Number.isFinite(v)) {
-        throw new Error(`${label} must be finite (not NaN or ±infinity)`);
-      }
-    }
+  constructor(name, distance, mass, radius, luminosity, ra, dec) {
+    this._distanceLy = _extractQuantityValue(distance, "LightYear", "distance");
+    this._massSolar = _extractQuantityValue(mass, "SolarMass", "mass");
+    this._radiusSolar = _extractQuantityValue(
+      radius,
+      "NominalSolarRadius",
+      "radius",
+    );
+    this._luminositySolar = _extractQuantityValue(
+      luminosity,
+      "SolarLuminosity",
+      "luminosity",
+    );
+    this._raDeg = _extractQuantityValue(ra, "Degree", "ra");
+    this._decDeg = _extractQuantityValue(dec, "Degree", "dec");
 
     this._name = name;
-    this._distanceLy = distanceLy;
-    this._massSolar = massSolar;
-    this._radiusSolar = radiusSolar;
-    this._luminositySolar = luminositySolar;
-    this._raDeg = raDeg;
-    this._decDeg = decDeg;
   }
 
   /**
@@ -54,49 +50,67 @@ export class Star {
     const native = backend.NativeStar.catalog(name);
     return new Star(
       native.name,
-      native.distanceLy,
-      native.massSolar,
-      native.radiusSolar,
-      native.luminositySolar,
-      native.raDeg,
-      native.decDeg,
+      new Quantity(native.distanceLy, "LightYear"),
+      new Quantity(native.massSolar, "SolarMass"),
+      new Quantity(native.radiusSolar, "NominalSolarRadius"),
+      new Quantity(native.luminositySolar, "SolarLuminosity"),
+      new Quantity(native.raDeg, "Degree"),
+      new Quantity(native.decDeg, "Degree"),
     );
   }
 
-  // ── raw-number accessors (backward compatible) ─────────────────
-
   /** Star name. */
-  get name() { return this._name; }
-  /** Distance in light-years. */
-  get distanceLy() { return this._distanceLy; }
-  /** Mass in solar masses (M☉). */
-  get massSolar() { return this._massSolar; }
-  /** Radius in solar radii (R☉). */
-  get radiusSolar() { return this._radiusSolar; }
-  /** Luminosity in solar luminosities (L☉). */
-  get luminositySolar() { return this._luminositySolar; }
-  /** Right ascension at J2000.0 in degrees. */
-  get raDeg() { return this._raDeg; }
-  /** Declination at J2000.0 in degrees. */
-  get decDeg() { return this._decDeg; }
+  get name() {
+    return this._name;
+  }
 
   // ── typed accessors ────────────────────────────────────────────
 
   /** Distance as a `Quantity` in LightYear. */
-  get distance() { return new Quantity(this._distanceLy, 'LightYear'); }
+  get distance() {
+    return new Quantity(this._distanceLy, "LightYear");
+  }
   /** Mass as a `Quantity` in SolarMass. */
-  get mass() { return new Quantity(this._massSolar, 'SolarMass'); }
-  /** Radius as a `Quantity` in SolarRadius. */
-  get radius() { return new Quantity(this._radiusSolar, 'SolarRadius'); }
+  get mass() {
+    return new Quantity(this._massSolar, "SolarMass");
+  }
+  /** Radius as a `Quantity` in NominalSolarRadius. */
+  get radius() {
+    return new Quantity(this._radiusSolar, "NominalSolarRadius");
+  }
   /** Luminosity as a `Quantity` in SolarLuminosity. */
-  get luminosity() { return new Quantity(this._luminositySolar, 'SolarLuminosity'); }
+  get luminosity() {
+    return new Quantity(this._luminositySolar, "SolarLuminosity");
+  }
   /** Right ascension as a `Quantity` in Degree. */
-  get ra() { return new Quantity(this._raDeg, 'Degree'); }
+  get ra() {
+    return new Quantity(this._raDeg, "Degree");
+  }
   /** Declination as a `Quantity` in Degree. */
-  get dec() { return new Quantity(this._decDeg, 'Degree'); }
+  get dec() {
+    return new Quantity(this._decDeg, "Degree");
+  }
 
   /** Human-readable representation. */
   format() {
     return `Star(${this._name}, d=${this._distanceLy.toFixed(1)} ly, RA=${this._raDeg.toFixed(4)}°, Dec=${this._decDeg.toFixed(4)}°)`;
   }
+}
+
+/**
+ * Extract a canonical scalar value from a `Quantity`.
+ * @param {unknown} value
+ * @param {string} unit
+ * @param {string} label
+ * @returns {number}
+ */
+function _extractQuantityValue(value, unit, label) {
+  if (!(value instanceof Quantity)) {
+    throw new Error(`${label}: expected a Quantity`);
+  }
+  const converted = value.to(unit).value;
+  if (!Number.isFinite(converted)) {
+    throw new Error(`${label} must be finite (not NaN or ±infinity)`);
+  }
+  return converted;
 }

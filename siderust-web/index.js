@@ -33,7 +33,7 @@ export {
   vsop87MoonGeocentric,
   transformPositionCenter,
   transformPositionFrame,
-  orbitalPeriodDays,
+  orbitalPeriod,
   // Body events
   bodyAltitudeAt,
   bodyAzimuthAt,

@@ -3,204 +3,133 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Siderust — Browser Astronomy Demo</title>
+  <title>Siderust Typed Browser Demo</title>
   <style>
-    :root { --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff; --dim: #8b949e; --green: #3fb950; --card: #161b22; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--fg); padding: 2rem; max-width: 900px; margin: 0 auto; }
-    h1 { color: var(--accent); margin-bottom: 0.5rem; }
-    h2 { color: var(--accent); margin-top: 2rem; font-size: 1.2em; }
-    p.subtitle { color: var(--dim); margin-bottom: 2rem; }
-    .status { padding: 0.5rem 1rem; border-radius: 6px; margin-bottom: 1.5rem; }
-    .status.loading { background: #1f2937; color: var(--dim); }
-    .status.ready { background: #0d2818; color: var(--green); }
-    .status.error { background: #3d1418; color: #f85149; }
-    .card { background: var(--card); border: 1px solid #30363d; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; }
-    .card h3 { font-size: 1em; color: var(--accent); margin-bottom: 0.75rem; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-    th, td { text-align: left; padding: 0.35rem 0.75rem; border-bottom: 1px solid #21262d; }
-    th { color: var(--dim); font-weight: 500; }
-    td.num { font-family: monospace; }
-    pre { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.85em; margin-top: 0.5rem; white-space: pre-wrap; }
-    select, button { background: var(--card); color: var(--fg); border: 1px solid #30363d; border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.9em; cursor: pointer; }
-    button:hover { border-color: var(--accent); }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
-    footer { margin-top: 3rem; color: var(--dim); font-size: 0.8em; text-align: center; }
+    :root {
+      --bg: #f6f3ec;
+      --ink: #1f2430;
+      --accent: #8b5e34;
+      --panel: #fffaf2;
+      --line: #dbcdb7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Iowan Old Style", serif;
+      background:
+        radial-gradient(circle at top left, #fff6e4 0, transparent 32%),
+        linear-gradient(180deg, #f0e7d7, var(--bg));
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      background: rgba(255, 250, 242, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 1.5rem;
+      box-shadow: 0 30px 80px rgba(31, 36, 48, 0.12);
+    }
+    h1, h2 { margin: 0 0 0.75rem; color: var(--accent); }
+    p { line-height: 1.55; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1rem;
+    }
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.88rem;
+    }
+    .status { margin-bottom: 1rem; }
   </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "@siderust/qtty-web": "../../../../qtty-js/qtty-web/index.js",
+        "@siderust/tempoch-web": "../../../../tempoch-js/tempoch-web/index.js",
+        "@siderust/siderust-web": "../../index.js"
+      }
+    }
+  </script>
 </head>
 <body>
-  <h1>🌌 Siderust — Browser Astronomy</h1>
-  <p class="subtitle">High-precision astronomy running entirely in your browser via WebAssembly. No server required.</p>
+  <main>
+    <h1>Siderust Browser Demo</h1>
+    <p class="status" id="status">Loading typed wasm packages…</p>
 
-  <div id="status" class="status loading">⏳ Loading WASM module…</div>
-
-  <!-- Observatory selector -->
-  <div class="card">
-    <h3>Observatory</h3>
-    <select id="observatory">
-      <option value="orm">Roque de los Muchachos (La Palma)</option>
-      <option value="paranal">Paranal (Chile)</option>
-      <option value="mauna">Mauna Kea (Hawaiʻi)</option>
-      <option value="silla">La Silla (Chile)</option>
-    </select>
-    <pre id="obs-info"></pre>
-  </div>
-
-  <div class="grid">
-    <!-- Sun altitude -->
-    <div class="card">
-      <h3>☀️ Current Sun position</h3>
-      <pre id="sun-pos"></pre>
+    <div class="grid">
+      <section class="card">
+        <h2>Observer</h2>
+        <pre id="observer"></pre>
+      </section>
+      <section class="card">
+        <h2>Sun</h2>
+        <pre id="sun"></pre>
+      </section>
+      <section class="card">
+        <h2>Moon</h2>
+        <pre id="moon"></pre>
+      </section>
+      <section class="card">
+        <h2>Mars</h2>
+        <pre id="mars"></pre>
+      </section>
     </div>
-
-    <!-- Moon phase -->
-    <div class="card">
-      <h3>🌙 Current Moon phase</h3>
-      <pre id="moon-info"></pre>
-    </div>
-  </div>
-
-  <!-- Planets -->
-  <div class="card">
-    <h3>🪐 Planet positions (heliocentric)</h3>
-    <table>
-      <thead><tr><th>Planet</th><th>X (AU)</th><th>Y (AU)</th><th>Z (AU)</th></tr></thead>
-      <tbody id="planets"></tbody>
-    </table>
-  </div>
-
-  <!-- Star catalog -->
-  <div class="card">
-    <h3>⭐ Catalog star altitudes</h3>
-    <table>
-      <thead><tr><th>Star</th><th>RA (°)</th><th>Dec (°)</th><th>Altitude (°)</th></tr></thead>
-      <tbody id="stars"></tbody>
-    </table>
-  </div>
-
-  <!-- Sun events -->
-  <div class="card">
-    <h3>🌅 Sun crossings (next 24 h, horizon)</h3>
-    <pre id="sun-events"></pre>
-    <button id="btn-compute" disabled>Compute crossings</button>
-  </div>
-
-  <footer>
-    Powered by <a href="https://github.com/Siderust/siderust" style="color:var(--accent)">Siderust</a> —
-    AGPL-3.0 · WASM size ≈ 2.6 MB gzipped · Version <span id="ver"></span>
-  </footer>
+  </main>
 
   <script type="module">
-    // ── Adjust this path to wherever the built pkg/ lives relative to this HTML
-    //    When served from the repo:   ../../pkg/siderust_web.js
-    //    When published to npm:       '@siderust/siderust-web'
-    import init, {
+    import { Quantity } from '@siderust/qtty-web';
+    import { JulianDate, ModifiedJulianDate, Period } from '@siderust/tempoch-web';
+    import {
+      init,
       Observer,
-      Star,
-      version,
-      listBodies,
-      listCatalogStars,
       bodyAltitudeAt,
-      bodyAzimuthAt,
       bodyCrossings,
-      starAltitudeAt,
-      vsop87Heliocentric,
       moonPhase,
-    } from '../../pkg/siderust_web.js';
+      vsop87Heliocentric,
+    } from '@siderust/siderust-web';
 
-    const $ = (id) => document.getElementById(id);
+    const DEG = (value) => new Quantity(value, 'Degree');
+    const statusEl = document.getElementById('status');
 
-    // ── Init ────────────────────────────────────────────────────────
     try {
-      await init();
-      $('status').className = 'status ready';
-      $('status').textContent = '✅ WASM loaded — all computations run locally in your browser';
-      $('ver').textContent = version();
-      $('btn-compute').disabled = false;
-    } catch (e) {
-      $('status').className = 'status error';
-      $('status').textContent = `❌ Failed to load WASM: ${e.message}`;
-      throw e;
-    }
+      await init(new URL('../../pkg/siderust_web_bg.wasm', import.meta.url));
 
-    // ── Helpers ─────────────────────────────────────────────────────
-    function getObserver() {
-      switch ($('observatory').value) {
-        case 'orm':     return Observer.roqueDeLasMuchachos();
-        case 'paranal': return Observer.elParanal();
-        case 'mauna':   return Observer.maunaKea();
-        case 'silla':   return Observer.laSilla();
-      }
-    }
-    // Julian Date for "now" (approximate — good enough for a demo)
-    function nowJD() {
-      return 2440587.5 + Date.now() / 86400000;
-    }
-    // MJD for "now"
-    function nowMJD() {
-      return nowJD() - 2400000.5;
-    }
+      const observer = new Observer(DEG(-17.8925), DEG(28.7543), new Quantity(2396, 'Meter'));
+      const jd = new JulianDate(2_451_545.0);
+      const mjd = new ModifiedJulianDate(60_000.0);
+      const window = new Period(mjd, new ModifiedJulianDate(60_001.0));
 
-    // ── Render ──────────────────────────────────────────────────────
-    function render() {
-      const obs = getObserver();
-      const jd  = nowJD();
-      const mjd = nowMJD();
-
-      // Observatory info
-      $('obs-info').textContent = obs.format();
-
-      // Sun position
-      const sunAlt = bodyAltitudeAt('Sun', obs, mjd);
-      const sunAz  = bodyAzimuthAt('Sun', obs, mjd);
-      $('sun-pos').textContent =
-        `Altitude: ${sunAlt.toFixed(4)}°\nAzimuth:  ${sunAz.toFixed(4)}°\nMJD:      ${mjd.toFixed(6)}`;
-
-      // Moon phase
+      const sunAltitude = bodyAltitudeAt('Sun', observer, mjd);
+      const sunCrossings = bodyCrossings('Sun', observer, window, DEG(0));
       const phase = moonPhase(jd);
-      $('moon-info').textContent =
-        `Phase:     ${phase.label}\nIllum:     ${(phase.illuminatedFraction * 100).toFixed(1)}%\nElongation: ${phase.elongationDeg.toFixed(1)}°\nWaxing:    ${phase.waxing}`;
+      const mars = vsop87Heliocentric('Mars', jd);
 
-      // Planets
-      const planetNames = ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune'];
-      $('planets').innerHTML = planetNames.map(name => {
-        const pos = vsop87Heliocentric(name, jd);
-        return `<tr><td>${name}</td><td class="num">${pos.x.toFixed(6)}</td><td class="num">${pos.y.toFixed(6)}</td><td class="num">${pos.z.toFixed(6)}</td></tr>`;
-      }).join('');
+      document.getElementById('observer').textContent = observer.format();
+      document.getElementById('sun').textContent =
+        `Altitude: ${sunAltitude.toString()}\nCrossings in next day: ${sunCrossings.length}`;
+      document.getElementById('moon').textContent =
+        `Phase: ${phase.label}\nElongation: ${phase.elongation.toString()}\nIlluminated: ${(phase.illuminatedFraction * 100).toFixed(1)}%`;
+      document.getElementById('mars').textContent =
+        `X: ${mars.x.toString()}\nY: ${mars.y.toString()}\nZ: ${mars.z.toString()}`;
 
-      // Stars
-      const starNames = listCatalogStars();
-      $('stars').innerHTML = starNames.map(name => {
-        const star = Star.catalog(name);
-        const alt = starAltitudeAt(star, obs, mjd);
-        const row = `<tr><td>${name}</td><td class="num">${star.raDeg.toFixed(2)}</td><td class="num">${star.decDeg.toFixed(2)}</td><td class="num">${alt.toFixed(2)}</td></tr>`;
-        star.free();
-        return row;
-      }).join('');
-
-      obs.free();
+      statusEl.textContent = 'Typed browser API loaded successfully.';
+    } catch (error) {
+      statusEl.textContent = `Failed to initialize: ${error.message}`;
+      throw error;
     }
-
-    // ── Sun crossings ───────────────────────────────────────────────
-    $('btn-compute').addEventListener('click', () => {
-      const obs   = getObserver();
-      const mjd0  = nowMJD();
-      const mjd1  = mjd0 + 1;   // next 24 h
-      const events = bodyCrossings('Sun', obs, mjd0, mjd1, 0);
-      if (events.length === 0) {
-        $('sun-events').textContent = 'No horizon crossings in the next 24 hours (midnight Sun or no-Sun period).';
-      } else {
-        $('sun-events').textContent = events
-          .map(e => `${e.direction.padEnd(8)} MJD ${e.mjd.toFixed(6)}`)
-          .join('\n');
-      }
-      obs.free();
-    });
-
-    // ── Run on load & observatory change ────────────────────────────
-    render();
-    $('observatory').addEventListener('change', render);
   </script>
 </body>
 </html>

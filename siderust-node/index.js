@@ -41,7 +41,7 @@ module.exports.vsop87EarthHeliocentric = wrappers.vsop87EarthHeliocentric;
 module.exports.vsop87MoonGeocentric = wrappers.vsop87MoonGeocentric;
 module.exports.transformPositionCenter = wrappers.transformPositionCenter;
 module.exports.transformPositionFrame = wrappers.transformPositionFrame;
-module.exports.orbitalPeriodDays = wrappers.orbitalPeriodDays;
+module.exports.orbitalPeriod = wrappers.orbitalPeriod;
 
 // ── Body events ───────────────────────────────────────────────────
 module.exports.bodyAltitudeAt = wrappers.bodyAltitudeAt;
@@ -76,5 +76,4 @@ module.exports.moonIlluminationRange = wrappers.moonIlluminationRange;
 
 // ── Meta ──────────────────────────────────────────────────────────
 module.exports.version = wrappers.version;
-
 
