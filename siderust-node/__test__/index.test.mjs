@@ -33,7 +33,7 @@ const {
   version,
   vsop87Heliocentric,
   vsop87MoonGeocentric,
-} = require(join(__dirname, '..', 'index.js'));
+} = require(join(__dirname, '..'));
 
 const DEG = (value) => new Quantity(value, 'Degree');
 const M = (value) => new Quantity(value, 'Meter');

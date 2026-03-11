@@ -11,13 +11,8 @@ description = "Shared binding logic for siderust JavaScript adapters"
 name = "siderust_binding_core"
 
 [dependencies]
-siderust = { path = "../../../rust/siderust", features = [] }
-qtty     = "0.4.0"
-tempoch  = "0.3"
-affn     = { version = "0.3.3", features = ["astro"] }
-chrono   = "0.4"
-
-[patch.crates-io]
-affn    = { path = "../../../rust/affn" }
-cheby   = { path = "../../../rust/siderust/dev-deps/cheby" }
-tempoch = { path = "../../../rust/tempoch/tempoch" }
+siderust = { version = "0.6.0", features = [] }
+qtty     = "0.4.1"
+tempoch  = "0.4"
+affn     = { version = "0.4.1", features = ["astro"] }
+chrono   = "0.4.44"
