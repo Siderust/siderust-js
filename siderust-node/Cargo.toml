@@ -12,21 +12,17 @@ readme = "README.md"
 crate-type = ["cdylib"]
 
 [dependencies]
-siderust = { path = "../siderust", features = [] }
-qtty     = "0.4.0"
-tempoch  = "0.3"
-affn     = { version = "0.3.3", features = ["astro"] }
-chrono   = "0.4"
+siderust = { version = "0.6.0", features = [] }
+siderust-binding-core = { path = "../siderust-core" }
+qtty     = "0.4.1"
+tempoch  = "0.4"
+affn     = { version = "0.4.1", features = ["astro"] }
+chrono   = "0.4.44"
 napi     = { version = "2", features = ["napi6"] }
 napi-derive = "2"
 
 [build-dependencies]
 napi-build = "2"
-
-[patch.crates-io]
-affn    = { path = "../siderust/dev-deps/affn" }
-cheby   = { path = "../siderust/dev-deps/cheby" }
-tempoch = { path = "../siderust/dev-deps/tempoch/tempoch" }
 
 [profile.release]
 lto = true

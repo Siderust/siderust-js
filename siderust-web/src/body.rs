@@ -6,65 +6,14 @@
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-use siderust::bodies::solar_system;
-use siderust::bodies::Planet;
+// Re-export shared types from the binding core.
+pub(crate) use siderust_binding_core::body::BodyKind;
+pub(crate) use siderust_binding_core::dispatch_body;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Body dispatch
-// ─────────────────────────────────────────────────────────────────────────────
-
-pub(crate) enum BodyKind {
-    Sun,
-    Moon,
-    Mercury,
-    Venus,
-    Mars,
-    Jupiter,
-    Saturn,
-    Uranus,
-    Neptune,
+/// Convert a body name string to BodyKind, mapping errors to JsError.
+pub(crate) fn parse_body(s: &str) -> Result<BodyKind, JsError> {
+    BodyKind::from_str(s).map_err(|e| JsError::new(&e))
 }
-
-impl BodyKind {
-    pub(crate) fn from_str(s: &str) -> Result<Self, JsError> {
-        match s {
-            "Sun" | "sun" => Ok(Self::Sun),
-            "Moon" | "moon" => Ok(Self::Moon),
-            "Mercury" | "mercury" => Ok(Self::Mercury),
-            "Venus" | "venus" => Ok(Self::Venus),
-            "Mars" | "mars" => Ok(Self::Mars),
-            "Jupiter" | "jupiter" => Ok(Self::Jupiter),
-            "Saturn" | "saturn" => Ok(Self::Saturn),
-            "Uranus" | "uranus" => Ok(Self::Uranus),
-            "Neptune" | "neptune" => Ok(Self::Neptune),
-            _ => Err(JsError::new(&format!(
-                "Unknown body: \"{s}\". Valid: Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune."
-            ))),
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// dispatch macro
-// ─────────────────────────────────────────────────────────────────────────────
-
-macro_rules! dispatch_body {
-    ($kind:expr, |$b:ident| $op:expr ) => {
-        match $kind {
-            BodyKind::Sun     => { let $b = siderust::bodies::solar_system::Sun;     $op }
-            BodyKind::Moon    => { let $b = siderust::bodies::solar_system::Moon;    $op }
-            BodyKind::Mercury => { let $b = siderust::bodies::solar_system::Mercury; $op }
-            BodyKind::Venus   => { let $b = siderust::bodies::solar_system::Venus;   $op }
-            BodyKind::Mars    => { let $b = siderust::bodies::solar_system::Mars;    $op }
-            BodyKind::Jupiter => { let $b = siderust::bodies::solar_system::Jupiter; $op }
-            BodyKind::Saturn  => { let $b = siderust::bodies::solar_system::Saturn;  $op }
-            BodyKind::Uranus  => { let $b = siderust::bodies::solar_system::Uranus;  $op }
-            BodyKind::Neptune => { let $b = siderust::bodies::solar_system::Neptune; $op }
-        }
-    };
-}
-
-pub(crate) use dispatch_body;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Planet info
@@ -81,45 +30,34 @@ pub struct PlanetInfo {
     pub inclination_deg: f64,
 }
 
-fn planet_info(name: &str, p: &Planet) -> PlanetInfo {
-    PlanetInfo {
-        name: name.to_string(),
-        mass_kg: p.mass.value(),
-        radius_km: p.radius.value(),
-        semi_major_axis_au: p.orbit.semi_major_axis.value(),
-        eccentricity: p.orbit.eccentricity,
-        inclination_deg: p.orbit.inclination.value(),
+impl From<siderust_binding_core::body::PlanetInfo> for PlanetInfo {
+    fn from(p: siderust_binding_core::body::PlanetInfo) -> Self {
+        Self {
+            name: p.name,
+            mass_kg: p.mass_kg,
+            radius_km: p.radius_km,
+            semi_major_axis_au: p.semi_major_axis_au,
+            eccentricity: p.eccentricity,
+            inclination_deg: p.inclination_deg,
+        }
     }
 }
 
 /// Get physical parameters for a named planet.
 #[wasm_bindgen(js_name = "getPlanet")]
 pub fn get_planet(name: &str) -> Result<JsValue, JsError> {
-    let info = match name {
-        "Mercury" | "mercury" => planet_info("Mercury", &solar_system::MERCURY),
-        "Venus" | "venus" => planet_info("Venus", &solar_system::VENUS),
-        "Earth" | "earth" => planet_info("Earth", &solar_system::EARTH),
-        "Mars" | "mars" => planet_info("Mars", &solar_system::MARS),
-        "Jupiter" | "jupiter" => planet_info("Jupiter", &solar_system::JUPITER),
-        "Saturn" | "saturn" => planet_info("Saturn", &solar_system::SATURN),
-        "Uranus" | "uranus" => planet_info("Uranus", &solar_system::URANUS),
-        "Neptune" | "neptune" => planet_info("Neptune", &solar_system::NEPTUNE),
-        _ => {
-            return Err(JsError::new(&format!(
-                "Unknown planet: \"{name}\". Valid: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune."
-            )));
-        }
-    };
+    let info: PlanetInfo = siderust_binding_core::body::get_planet_info(name)
+        .map(PlanetInfo::from)
+        .ok_or_else(|| JsError::new(&format!(
+            "Unknown planet: \"{name}\". Valid: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune."
+        )))?;
     to_js(&info)
 }
 
 /// List the names of all available solar-system bodies.
 #[wasm_bindgen(js_name = "listBodies")]
 pub fn list_bodies() -> JsValue {
-    let bodies: Vec<&str> = vec![
-        "Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune",
-    ];
-    serde_wasm_bindgen::to_value(&bodies).unwrap()
+    serde_wasm_bindgen::to_value(BodyKind::all_names()).unwrap()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

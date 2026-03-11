@@ -1,0 +1,18 @@
+[package]
+name = "siderust-binding-core"
+version = "0.1.0"
+edition = "2021"
+authors = ["VPRamon <vallespuigramon@gmail.com>"]
+license = "AGPL-3.0"
+repository = "https://github.com/Siderust/siderust"
+description = "Shared binding logic for siderust JavaScript adapters"
+
+[lib]
+name = "siderust_binding_core"
+
+[dependencies]
+siderust = { version = "0.6.0", features = [] }
+qtty     = "0.4.1"
+tempoch  = "0.4"
+affn     = { version = "0.4.1", features = ["astro"] }
+chrono   = "0.4.44"

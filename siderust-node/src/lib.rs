@@ -24,6 +24,7 @@ mod ephemeris;
 mod events;
 mod observer;
 mod phase;
+mod position;
 mod star;
 
 pub use body::*;
@@ -32,6 +33,7 @@ pub use ephemeris::*;
 pub use events::*;
 pub use observer::*;
 pub use phase::*;
+pub use position::*;
 pub use star::*;
 
 /// Return the siderust-node version string.

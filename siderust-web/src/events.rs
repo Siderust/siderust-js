@@ -6,7 +6,7 @@
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-use crate::body::{dispatch_body, to_js, BodyKind};
+use crate::body::{dispatch_body, parse_body, to_js};
 use crate::observer::Observer;
 use crate::star::Star;
 
@@ -155,7 +155,7 @@ pub fn body_altitude_at(body: &str, observer: &Observer, mjd: f64) -> Result<f64
     if !mjd.is_finite() {
         return Err(JsError::new("mjd must be finite"));
     }
-    let kind = BodyKind::from_str(body)?;
+    let kind = parse_body(body)?;
     let m = ModifiedJulianDate::new(mjd);
     let result: f64 = dispatch_body!(kind, |b| {
         b.altitude_at(&observer.inner, m).to::<Degree>().value()
@@ -169,7 +169,7 @@ pub fn body_azimuth_at(body: &str, observer: &Observer, mjd: f64) -> Result<f64,
     if !mjd.is_finite() {
         return Err(JsError::new("mjd must be finite"));
     }
-    let kind = BodyKind::from_str(body)?;
+    let kind = parse_body(body)?;
     let m = ModifiedJulianDate::new(mjd);
     let result: f64 = dispatch_body!(kind, |b| {
         b.azimuth_at(&observer.inner, m).to::<Degree>().value()
@@ -190,7 +190,7 @@ pub fn body_crossings(
     end_mjd: f64,
     threshold_deg: f64,
 ) -> Result<JsValue, JsError> {
-    let kind = BodyKind::from_str(body)?;
+    let kind = parse_body(body)?;
     let window = make_window(start_mjd, end_mjd)?;
     let thr = Degrees::new(threshold_deg);
     let opts = SearchOpts::default();
@@ -208,7 +208,7 @@ pub fn body_culminations(
     start_mjd: f64,
     end_mjd: f64,
 ) -> Result<JsValue, JsError> {
-    let kind = BodyKind::from_str(body)?;
+    let kind = parse_body(body)?;
     let window = make_window(start_mjd, end_mjd)?;
     let opts = SearchOpts::default();
     let result = dispatch_body!(kind, |b| {
@@ -226,7 +226,7 @@ pub fn body_above_threshold(
     end_mjd: f64,
     threshold_deg: f64,
 ) -> Result<JsValue, JsError> {
-    let kind = BodyKind::from_str(body)?;
+    let kind = parse_body(body)?;
     let window = make_window(start_mjd, end_mjd)?;
     let thr = Degrees::new(threshold_deg);
     let opts = SearchOpts::default();
@@ -251,7 +251,7 @@ pub fn body_below_threshold(
     end_mjd: f64,
     threshold_deg: f64,
 ) -> Result<JsValue, JsError> {
-    let kind = BodyKind::from_str(body)?;
+    let kind = parse_body(body)?;
     let window = make_window(start_mjd, end_mjd)?;
     let thr = Degrees::new(threshold_deg);
     let opts = SearchOpts::default();
@@ -276,7 +276,7 @@ pub fn body_azimuth_crossings(
     end_mjd: f64,
     bearing_deg: f64,
 ) -> Result<JsValue, JsError> {
-    let kind = BodyKind::from_str(body)?;
+    let kind = parse_body(body)?;
     let window = make_window(start_mjd, end_mjd)?;
     let bearing = Degrees::new(bearing_deg);
     let opts = SearchOpts::default();
@@ -300,7 +300,7 @@ pub fn body_azimuth_extrema(
     start_mjd: f64,
     end_mjd: f64,
 ) -> Result<JsValue, JsError> {
-    let kind = BodyKind::from_str(body)?;
+    let kind = parse_body(body)?;
     let window = make_window(start_mjd, end_mjd)?;
     let opts = SearchOpts::default();
     let result = dispatch_body!(kind, |b| {

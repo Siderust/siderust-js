@@ -8,7 +8,7 @@
 
 use napi_derive::napi;
 
-use crate::body::{dispatch_body, BodyKind};
+use crate::body::{dispatch_body, parse_body};
 use crate::observer::JsObserver;
 use crate::star::JsStar;
 
@@ -180,7 +180,7 @@ pub fn body_altitude_at(body: String, observer: &JsObserver, mjd: f64) -> napi::
     if !mjd.is_finite() {
         return Err(napi::Error::from_reason("mjd must be finite"));
     }
-    let kind = BodyKind::from_str(&body)?;
+    let kind = parse_body(&body)?;
     let m = ModifiedJulianDate::new(mjd);
     let result: f64 = dispatch_body!(kind, |b| {
         b.altitude_at(&observer.inner, m).to::<Degree>().value()
@@ -196,7 +196,7 @@ pub fn body_azimuth_at(body: String, observer: &JsObserver, mjd: f64) -> napi::R
     if !mjd.is_finite() {
         return Err(napi::Error::from_reason("mjd must be finite"));
     }
-    let kind = BodyKind::from_str(&body)?;
+    let kind = parse_body(&body)?;
     let m = ModifiedJulianDate::new(mjd);
     let result: f64 = dispatch_body!(kind, |b| {
         b.azimuth_at(&observer.inner, m).to::<Degree>().value()
@@ -224,7 +224,7 @@ pub fn body_crossings(
     end_mjd: f64,
     threshold_deg: f64,
 ) -> napi::Result<Vec<CrossingEvent>> {
-    let kind = BodyKind::from_str(&body)?;
+    let kind = parse_body(&body)?;
     let window = make_window(start_mjd, end_mjd)?;
     let thr = Degrees::new(threshold_deg);
     let opts = SearchOpts::default();
@@ -244,7 +244,7 @@ pub fn body_culminations(
     start_mjd: f64,
     end_mjd: f64,
 ) -> napi::Result<Vec<CulminationEvent>> {
-    let kind = BodyKind::from_str(&body)?;
+    let kind = parse_body(&body)?;
     let window = make_window(start_mjd, end_mjd)?;
     let opts = SearchOpts::default();
     let result = dispatch_body!(kind, |b| {
@@ -264,7 +264,7 @@ pub fn body_above_threshold(
     end_mjd: f64,
     threshold_deg: f64,
 ) -> napi::Result<Vec<MjdPeriod>> {
-    let kind = BodyKind::from_str(&body)?;
+    let kind = parse_body(&body)?;
     let window = make_window(start_mjd, end_mjd)?;
     let thr = Degrees::new(threshold_deg);
     let opts = SearchOpts::default();
@@ -291,7 +291,7 @@ pub fn body_below_threshold(
     end_mjd: f64,
     threshold_deg: f64,
 ) -> napi::Result<Vec<MjdPeriod>> {
-    let kind = BodyKind::from_str(&body)?;
+    let kind = parse_body(&body)?;
     let window = make_window(start_mjd, end_mjd)?;
     let thr = Degrees::new(threshold_deg);
     let opts = SearchOpts::default();
@@ -319,7 +319,7 @@ pub fn body_azimuth_crossings(
     end_mjd: f64,
     bearing_deg: f64,
 ) -> napi::Result<Vec<AzimuthCrossingEvent>> {
-    let kind = BodyKind::from_str(&body)?;
+    let kind = parse_body(&body)?;
     let window = make_window(start_mjd, end_mjd)?;
     let bearing = Degrees::new(bearing_deg);
     let opts = SearchOpts::default();
@@ -345,7 +345,7 @@ pub fn body_azimuth_extrema(
     start_mjd: f64,
     end_mjd: f64,
 ) -> napi::Result<Vec<AzimuthExtremum>> {
-    let kind = BodyKind::from_str(&body)?;
+    let kind = parse_body(&body)?;
     let window = make_window(start_mjd, end_mjd)?;
     let opts = SearchOpts::default();
     let result = dispatch_body!(kind, |b| {

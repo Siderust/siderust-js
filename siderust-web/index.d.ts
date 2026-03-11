@@ -1,318 +1,311 @@
 /* eslint-disable */
 
-// ─── Initialisation ────────────────────────────────────────────────────────
-/**
- * Initialise the WASM module.  Must be called (and `await`-ed) before any
- * other function in this package.
- *
- * For bundlers (Webpack / Vite / Rollup) the WASM binary is resolved
- * automatically.  For static hosting pass the URL to the `.wasm` file:
- *
- * ```js
- * import init, { Observer, bodyAltitudeAt } from '@siderust/siderust-web';
- * await init();                          // bundler
- * await init('./siderust_web_bg.wasm');  // static / GitHub Pages
- * ```
- */
-export default function init(
-  module_or_path?: { module_or_path: RequestInfo | URL | Response | BufferSource | WebAssembly.Module } | RequestInfo | URL | Response | BufferSource | WebAssembly.Module
-): Promise<void>;
+import { Quantity } from '@siderust/qtty-web'
+import { JulianDate, ModifiedJulianDate, Period } from '@siderust/tempoch-web'
 
-// ─── Scalar types ──────────────────────────────────────────────────────────
+export function init(
+  module_or_path?: RequestInfo | URL | Response | BufferSource | WebAssembly.Module
+): Promise<void>
 
-/** Physical parameters of a solar-system planet. */
 export interface PlanetInfo {
-  name: string;
-  massKg: number;
-  radiusKm: number;
-  semiMajorAxisAu: number;
-  eccentricity: number;
-  inclinationDeg: number;
+  name: string
+  mass: Quantity
+  radius: Quantity
+  semiMajorAxis: Quantity
+  eccentricity: number
+  inclination: Quantity
 }
 
-/** A spherical direction (two angles in degrees) with a frame label. */
 export interface SphericalDirection {
-  polarDeg: number;
-  azimuthDeg: number;
-  frame: string;
+  polar: Quantity
+  azimuth: Quantity
+  frame: string
 }
 
-/** Cartesian ECEF coordinates in metres. */
 export interface CartesianEcef {
-  x: number;
-  y: number;
-  z: number;
+  x: Quantity
+  y: Quantity
+  z: Quantity
 }
 
-/** A 3D Cartesian position with frame and center metadata. */
+export interface CartesianUnitVector {
+  x: number
+  y: number
+  z: number
+}
+
 export interface CartesianPosition {
-  x: number;
-  y: number;
-  z: number;
-  frame: string;
-  center: string;
+  x: Quantity
+  y: Quantity
+  z: Quantity
+  frame: string
+  center: string
 }
 
-/** A threshold-crossing event (rise or set). */
 export interface CrossingEvent {
-  mjd: number;
-  direction: string;
+  mjd: ModifiedJulianDate
+  direction: string
 }
 
-/** A culmination event (local altitude extremum). */
 export interface CulminationEvent {
-  mjd: number;
-  altitudeDeg: number;
-  kind: string;
+  mjd: ModifiedJulianDate
+  altitude: Quantity
+  kind: string
 }
 
-/** A time period (MJD interval). */
-export interface MjdPeriod {
-  startMjd: number;
-  endMjd: number;
-}
-
-/** An azimuth-crossing event. */
 export interface AzimuthCrossingEvent {
-  mjd: number;
-  direction: string;
+  mjd: ModifiedJulianDate
+  direction: string
 }
 
-/** An azimuth extremum (local max or min bearing). */
 export interface AzimuthExtremum {
-  mjd: number;
-  azimuthDeg: number;
-  kind: string;
+  mjd: ModifiedJulianDate
+  azimuth: Quantity
+  kind: string
 }
 
-/** Moon phase geometry at a single instant. */
 export interface MoonPhase {
-  phaseAngleDeg: number;
-  illuminatedFraction: number;
-  elongationDeg: number;
-  waxing: boolean;
-  label: string;
+  phaseAngle: Quantity
+  illuminatedFraction: number
+  elongation: Quantity
+  waxing: boolean
+  label: string
 }
 
-/** A principal lunar phase event. */
 export interface PhaseEvent {
-  mjd: number;
-  kind: string;
+  mjd: ModifiedJulianDate
+  kind: string
 }
 
-// ─── Observer class ────────────────────────────────────────────────────────
-
-/**
- * A geodetic observer location on the Earth's surface (WGS84 ellipsoid).
- *
- * ```js
- * const obs = new Observer(-17.8925, 28.7543, 2396);
- * const orm = Observer.roqueDeLasMuchachos();
- * ```
- */
 export class Observer {
-  constructor(lonDeg: number, latDeg: number, heightM: number);
-  static roqueDeLasMuchachos(): Observer;
-  static elParanal(): Observer;
-  static maunaKea(): Observer;
-  static laSilla(): Observer;
-  get lonDeg(): number;
-  get latDeg(): number;
-  get heightM(): number;
-  format(): string;
-  free(): void;
+  constructor(lon: Quantity, lat: Quantity, height: Quantity)
+  static roqueDeLasMuchachos(): Observer
+  static elParanal(): Observer
+  static maunaKea(): Observer
+  static laSilla(): Observer
+  get lon(): Quantity
+  get lat(): Quantity
+  get height(): Quantity
+  format(): string
 }
 
-// ─── Star class ────────────────────────────────────────────────────────────
-
-/**
- * A star with physical parameters and sky coordinates.
- *
- * ```js
- * const vega = Star.catalog('Vega');
- * const custom = new Star('MyStar', 100, 1.5, 1.2, 3.0, 200.0, 45.0);
- * ```
- */
 export class Star {
   constructor(
     name: string,
-    distanceLy: number,
-    massSolar: number,
-    radiusSolar: number,
-    luminositySolar: number,
-    raDeg: number,
-    decDeg: number
-  );
-  static catalog(name: string): Star;
-  get name(): string;
-  get distanceLy(): number;
-  get massSolar(): number;
-  get radiusSolar(): number;
-  get luminositySolar(): number;
-  get raDeg(): number;
-  get decDeg(): number;
-  format(): string;
-  free(): void;
+    distance: Quantity,
+    mass: Quantity,
+    radius: Quantity,
+    luminosity: Quantity,
+    ra: Quantity,
+    dec: Quantity
+  )
+  static catalog(name: string): Star
+  get name(): string
+  get distance(): Quantity
+  get mass(): Quantity
+  get radius(): Quantity
+  get luminosity(): Quantity
+  get ra(): Quantity
+  get dec(): Quantity
+  format(): string
 }
 
-// ─── Bodies ────────────────────────────────────────────────────────────────
-
-export function getPlanet(name: string): PlanetInfo;
-export function listBodies(): string[];
-export function listCatalogStars(): string[];
-
-// ─── Coordinates ───────────────────────────────────────────────────────────
+export function getPlanet(name: string): PlanetInfo
+export function listBodies(): Array<string>
+export function listCatalogStars(): Array<string>
 
 export function transformDirection(
-  polarDeg: number, azimuthDeg: number,
-  srcFrame: string, dstFrame: string, jd: number
-): SphericalDirection;
+  polar: Quantity,
+  azimuth: Quantity,
+  srcFrame: string,
+  dstFrame: string,
+  jd: JulianDate
+): SphericalDirection
 
 export function directionToHorizontal(
-  polarDeg: number, azimuthDeg: number,
-  srcFrame: string, jd: number, observer: Observer
-): SphericalDirection;
+  polar: Quantity,
+  azimuth: Quantity,
+  srcFrame: string,
+  jd: JulianDate,
+  observer: Observer
+): SphericalDirection
 
-export function geodeticToEcef(observer: Observer): CartesianEcef;
+export function geodeticToEcef(observer: Observer): CartesianEcef
 
 export function angularSeparation(
-  polar1Deg: number, azimuth1Deg: number,
-  polar2Deg: number, azimuth2Deg: number,
+  polar1: Quantity,
+  azimuth1: Quantity,
+  polar2: Quantity,
+  azimuth2: Quantity,
   frame: string
-): number;
+): Quantity
 
 export function cartesianDistance(
-  x1: number, y1: number, z1: number,
-  x2: number, y2: number, z2: number
-): number;
+  x1: Quantity,
+  y1: Quantity,
+  z1: Quantity,
+  x2: Quantity,
+  y2: Quantity,
+  z2: Quantity
+): Quantity
 
-export function cartesianMagnitude(x: number, y: number, z: number): number;
+export function cartesianMagnitude(x: Quantity, y: Quantity, z: Quantity): Quantity
 
 export function dotProduct(
-  x1: number, y1: number, z1: number,
-  x2: number, y2: number, z2: number
-): number;
+  x1: number,
+  y1: number,
+  z1: number,
+  x2: number,
+  y2: number,
+  z2: number
+): number
 
 export function directionToCartesian(
-  polarDeg: number, azimuthDeg: number
-): CartesianEcef;
+  polar: Quantity,
+  azimuth: Quantity
+): CartesianUnitVector
 
-// ─── Ephemeris ─────────────────────────────────────────────────────────────
-
-export function vsop87Heliocentric(body: string, jd: number): CartesianPosition;
-export function vsop87Barycentric(body: string, jd: number): CartesianPosition;
-export function vsop87SunBarycentric(jd: number): CartesianPosition;
-export function vsop87EarthBarycentric(jd: number): CartesianPosition;
-export function vsop87EarthHeliocentric(jd: number): CartesianPosition;
-export function vsop87MoonGeocentric(jd: number): CartesianPosition;
+export function vsop87Heliocentric(body: string, jd: JulianDate): CartesianPosition
+export function vsop87Barycentric(body: string, jd: JulianDate): CartesianPosition
+export function vsop87SunBarycentric(jd: JulianDate): CartesianPosition
+export function vsop87EarthBarycentric(jd: JulianDate): CartesianPosition
+export function vsop87EarthHeliocentric(jd: JulianDate): CartesianPosition
+export function vsop87MoonGeocentric(jd: JulianDate): CartesianPosition
 
 export function transformPositionCenter(
-  x: number, y: number, z: number,
-  srcCenter: string, dstCenter: string, jd: number
-): CartesianPosition;
+  x: Quantity,
+  y: Quantity,
+  z: Quantity,
+  srcCenter: string,
+  dstCenter: string,
+  jd: JulianDate
+): CartesianPosition
 
 export function transformPositionFrame(
-  x: number, y: number, z: number,
-  srcFrame: string, dstFrame: string, jd: number
-): CartesianPosition;
+  x: Quantity,
+  y: Quantity,
+  z: Quantity,
+  srcFrame: string,
+  dstFrame: string,
+  jd: JulianDate
+): CartesianPosition
 
-export function orbitalPeriodDays(name: string): number;
+export function orbitalPeriod(name: string): Quantity
 
-// ─── Events — body ─────────────────────────────────────────────────────────
+export function bodyAltitudeAt(
+  body: string,
+  observer: Observer,
+  mjd: ModifiedJulianDate
+): Quantity
 
-export function bodyAltitudeAt(body: string, observer: Observer, mjd: number): number;
-export function bodyAzimuthAt(body: string, observer: Observer, mjd: number): number;
+export function bodyAzimuthAt(
+  body: string,
+  observer: Observer,
+  mjd: ModifiedJulianDate
+): Quantity
 
 export function bodyCrossings(
-  body: string, observer: Observer,
-  startMjd: number, endMjd: number, thresholdDeg: number
-): CrossingEvent[];
+  body: string,
+  observer: Observer,
+  window: Period,
+  threshold: Quantity
+): Array<CrossingEvent>
 
 export function bodyCulminations(
-  body: string, observer: Observer,
-  startMjd: number, endMjd: number
-): CulminationEvent[];
+  body: string,
+  observer: Observer,
+  window: Period
+): Array<CulminationEvent>
 
 export function bodyAboveThreshold(
-  body: string, observer: Observer,
-  startMjd: number, endMjd: number, thresholdDeg: number
-): MjdPeriod[];
+  body: string,
+  observer: Observer,
+  window: Period,
+  threshold: Quantity
+): Array<Period>
 
 export function bodyBelowThreshold(
-  body: string, observer: Observer,
-  startMjd: number, endMjd: number, thresholdDeg: number
-): MjdPeriod[];
+  body: string,
+  observer: Observer,
+  window: Period,
+  threshold: Quantity
+): Array<Period>
 
 export function bodyAzimuthCrossings(
-  body: string, observer: Observer,
-  startMjd: number, endMjd: number, bearingDeg: number
-): AzimuthCrossingEvent[];
+  body: string,
+  observer: Observer,
+  window: Period,
+  bearing: Quantity
+): Array<AzimuthCrossingEvent>
 
 export function bodyAzimuthExtrema(
-  body: string, observer: Observer,
-  startMjd: number, endMjd: number
-): AzimuthExtremum[];
+  body: string,
+  observer: Observer,
+  window: Period
+): Array<AzimuthExtremum>
 
-// ─── Events — star ─────────────────────────────────────────────────────────
+export function starAltitudeAt(
+  star: Star,
+  observer: Observer,
+  mjd: ModifiedJulianDate
+): Quantity
 
-export function starAltitudeAt(star: Star, observer: Observer, mjd: number): number;
-export function starAzimuthAt(star: Star, observer: Observer, mjd: number): number;
+export function starAzimuthAt(
+  star: Star,
+  observer: Observer,
+  mjd: ModifiedJulianDate
+): Quantity
 
 export function starCrossings(
-  star: Star, observer: Observer,
-  startMjd: number, endMjd: number, thresholdDeg: number
-): CrossingEvent[];
+  star: Star,
+  observer: Observer,
+  window: Period,
+  threshold: Quantity
+): Array<CrossingEvent>
 
 export function starCulminations(
-  star: Star, observer: Observer,
-  startMjd: number, endMjd: number
-): CulminationEvent[];
+  star: Star,
+  observer: Observer,
+  window: Period
+): Array<CulminationEvent>
 
 export function starAboveThreshold(
-  star: Star, observer: Observer,
-  startMjd: number, endMjd: number, thresholdDeg: number
-): MjdPeriod[];
+  star: Star,
+  observer: Observer,
+  window: Period,
+  threshold: Quantity
+): Array<Period>
 
 export function starBelowThreshold(
-  star: Star, observer: Observer,
-  startMjd: number, endMjd: number, thresholdDeg: number
-): MjdPeriod[];
+  star: Star,
+  observer: Observer,
+  window: Period,
+  threshold: Quantity
+): Array<Period>
 
 export function starAzimuthCrossings(
-  star: Star, observer: Observer,
-  startMjd: number, endMjd: number, bearingDeg: number
-): AzimuthCrossingEvent[];
+  star: Star,
+  observer: Observer,
+  window: Period,
+  bearing: Quantity
+): Array<AzimuthCrossingEvent>
 
 export function starAzimuthExtrema(
-  star: Star, observer: Observer,
-  startMjd: number, endMjd: number
-): AzimuthExtremum[];
+  star: Star,
+  observer: Observer,
+  window: Period
+): Array<AzimuthExtremum>
 
 export function intersectPeriods(
-  periods1: MjdPeriod[], periods2: MjdPeriod[]
-): MjdPeriod[];
+  periods1: Array<Period>,
+  periods2: Array<Period>
+): Array<Period>
 
-// ─── Moon phases ───────────────────────────────────────────────────────────
+export function moonPhase(jd: JulianDate): MoonPhase
+export function moonPhaseTopocentric(jd: JulianDate, observer: Observer): MoonPhase
+export function findPhaseEvents(window: Period): Array<PhaseEvent>
+export function moonIlluminationAbove(window: Period, kMin: number): Array<Period>
+export function moonIlluminationBelow(window: Period, kMax: number): Array<Period>
+export function moonIlluminationRange(window: Period, kMin: number, kMax: number): Array<Period>
 
-export function moonPhase(jd: number): MoonPhase;
-export function moonPhaseTopocentric(jd: number, observer: Observer): MoonPhase;
-
-export function findPhaseEvents(
-  startMjd: number, endMjd: number
-): PhaseEvent[];
-
-export function moonIlluminationAbove(
-  startMjd: number, endMjd: number, kMin: number
-): MjdPeriod[];
-
-export function moonIlluminationBelow(
-  startMjd: number, endMjd: number, kMax: number
-): MjdPeriod[];
-
-export function moonIlluminationRange(
-  startMjd: number, endMjd: number, kMin: number, kMax: number
-): MjdPeriod[];
-
-// ─── Utility ───────────────────────────────────────────────────────────────
-
-export function version(): string;
+export function version(): string

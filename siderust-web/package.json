@@ -1,14 +1,14 @@
 {
   "name": "@siderust/siderust-web",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "High-precision astronomy for the browser — observer setup, celestial body tracking, altitude/azimuth events, coordinate transforms, ephemerides, and lunar phases. Powered by Rust + WebAssembly.",
   "type": "module",
-  "module": "pkg/siderust_web.js",
+  "module": "index.js",
   "types": "index.d.ts",
   "exports": {
     ".": {
       "types": "./index.d.ts",
-      "import": "./pkg/siderust_web.js"
+      "import": "./index.js"
     }
   },
   "scripts": {
@@ -19,10 +19,12 @@
     "clean": "rm -rf pkg/"
   },
   "files": [
+    "index.js",
+    "index.d.ts",
+    "lib/",
     "pkg/siderust_web_bg.wasm",
     "pkg/siderust_web.js",
     "pkg/siderust_web.d.ts",
-    "index.d.ts",
     "README.md",
     "examples/"
   ],
@@ -41,6 +43,10 @@
     "browser",
     "rust"
   ],
+  "dependencies": {
+    "@siderust/qtty-web": "^0.1.0",
+    "@siderust/tempoch-web": "^0.1.0"
+  },
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",

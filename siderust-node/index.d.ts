@@ -519,6 +519,54 @@ export declare class Observer {
   /** Human-readable string representation. */
   format(): string
 }
+/**
+ * A 3D cartesian position with frame, center, and unit metadata.
+ *
+ * This mirrors the Python `Position` type for API parity.
+ */
+export declare class Position {
+  /** Create a new position with explicit coordinates, frame, center, and unit. */
+  constructor(x: number, y: number, z: number, frame: string, center: string, unit: string)
+  /** X coordinate. */
+  get x(): number
+  /** Y coordinate. */
+  get y(): number
+  /** Z coordinate. */
+  get z(): number
+  /** Reference frame (e.g., "EclipticMeanJ2000", "ICRS"). */
+  get frame(): string
+  /** Coordinate center (e.g., "Barycentric", "Heliocentric", "Geocentric"). */
+  get center(): string
+  /** Distance unit ("au" or "km"). */
+  get unit(): string
+  /** Euclidean distance from origin. */
+  magnitude(): number
+  /** Subtract another position to get a displacement vector. */
+  subtract(other: Position): Displacement
+  /** Add a displacement to get a new position. */
+  addDisplacement(d: Displacement): Position
+}
+/** A displacement vector (difference between two positions). */
+export declare class Displacement {
+  /** Create a new displacement. */
+  constructor(dx: number, dy: number, dz: number, frame: string, unit: string)
+  /** X component of displacement. */
+  get dx(): number
+  /** Y component of displacement. */
+  get dy(): number
+  /** Z component of displacement. */
+  get dz(): number
+  /** Reference frame. */
+  get frame(): string
+  /** Distance unit. */
+  get unit(): string
+  /** Euclidean magnitude. */
+  magnitude(): number
+  /** Scale displacement by a factor. */
+  scale(factor: number): Displacement
+  /** Add another displacement. */
+  add(other: Displacement): Displacement
+}
 export type JsStar = Star
 /**
  * A star with physical parameters and sky coordinates.
