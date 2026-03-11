@@ -57,8 +57,8 @@
     "url": "https://github.com/Siderust/siderust"
   },
   "dependencies": {
-    "@siderust/qtty": "^0.1.0",
-    "@siderust/tempoch": "^0.1.0"
+    "@siderust/qtty": "file:../qtty-js/qtty-node",
+    "@siderust/tempoch": "file:../tempoch-js/tempoch-node"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

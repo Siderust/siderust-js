@@ -4,11 +4,37 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PACKAGE_DIR="$ROOT_DIR/siderust-node"
 WEB_DIR="$ROOT_DIR/siderust-web"
+QTTY_NODE_DIR="$ROOT_DIR/qtty-js/qtty-node"
+TEMPOCH_NODE_DIR="$ROOT_DIR/tempoch-js/tempoch-node"
 STEP="${1:-all}"
 
 run_install() {
+  # Install deps for the peer-dep submodules (needed so napi CLI is available
+  # when run_build compiles them).
+  (cd "$QTTY_NODE_DIR" && npm ci)
+  (cd "$TEMPOCH_NODE_DIR" && npm ci)
+
   cd "$PACKAGE_DIR"
   npm ci
+}
+
+run_build() {
+  # Build native peer deps first; siderust-node's node_modules symlinks to
+  # these directories so the .node binaries are immediately visible.
+  if [[ "${BUILD_MODE:-debug}" == "release" ]]; then
+    (cd "$QTTY_NODE_DIR" && npm run build)
+    (cd "$TEMPOCH_NODE_DIR" && npm run build)
+  else
+    (cd "$QTTY_NODE_DIR" && npm run build:debug)
+    (cd "$TEMPOCH_NODE_DIR" && npm run build:debug)
+  fi
+
+  cd "$PACKAGE_DIR"
+  if [[ "${BUILD_MODE:-debug}" == "release" ]]; then
+    npm run build
+  else
+    npm run build:debug
+  fi
 }
 
 run_format() {
@@ -19,15 +45,6 @@ run_format() {
 run_lint() {
   cd "$PACKAGE_DIR"
   npm run lint
-}
-
-run_build() {
-  cd "$PACKAGE_DIR"
-  if [[ "${BUILD_MODE:-debug}" == "release" ]]; then
-    npm run build
-  else
-    npm run build:debug
-  fi
 }
 
 run_test() {

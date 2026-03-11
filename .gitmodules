@@ -1,3 +1,9 @@
 [submodule "siderust"]
 	path = siderust
 	url = git@github.com:Siderust/siderust.git
+[submodule "qtty-js"]
+	path = qtty-js
+	url = https://github.com/Siderust/qtty-js.git
+[submodule "tempoch-js"]
+	path = tempoch-js
+	url = https://github.com/Siderust/tempoch-js.git

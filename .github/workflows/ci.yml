@@ -114,6 +114,8 @@ jobs:
         with:
           workspaces: |
             siderust-node -> siderust-node/target
+            qtty-js/qtty-node -> qtty-js/qtty-node/target
+            tempoch-js/tempoch-node -> tempoch-js/tempoch-node/target
       - run: ./scripts/ci.sh install
       - run: ./scripts/ci.sh build
       - run: ./scripts/ci.sh test
@@ -143,6 +145,8 @@ jobs:
         with:
           workspaces: |
             siderust-node -> siderust-node/target
+            qtty-js/qtty-node -> qtty-js/qtty-node/target
+            tempoch-js/tempoch-node -> tempoch-js/tempoch-node/target
       - run: ./scripts/ci.sh install
       - run: ./scripts/ci.sh build
       - run: ./scripts/ci.sh coverage
