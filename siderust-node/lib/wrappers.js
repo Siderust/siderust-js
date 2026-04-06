@@ -21,22 +21,14 @@ function toNativeObserver(obs) {
   if (!(obs instanceof Observer)) {
     throw new Error('Expected an Observer');
   }
-  return new backend.NativeObserver(obs._lonDeg, obs._latDeg, obs._heightM);
+  return obs.toNative();
 }
 
 function toNativeStar(star) {
   if (!(star instanceof Star)) {
     throw new Error('Expected a Star');
   }
-  return new backend.NativeStar(
-    star._name,
-    star._distanceLy,
-    star._massSolar,
-    star._radiusSolar,
-    star._luminositySolar,
-    star._raDeg,
-    star._decDeg,
-  );
+  return star.toNative();
 }
 
 function toJdValue(jd) {

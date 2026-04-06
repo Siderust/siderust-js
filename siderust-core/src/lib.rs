@@ -18,3 +18,4 @@ pub mod body;
 pub mod events;
 pub mod observer;
 pub mod position;
+pub mod star;

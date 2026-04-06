@@ -22,11 +22,11 @@ import {
 } from "../index.js";
 
 const qttyWasm = new URL(
-  "../../../qtty-js/qtty-web/pkg/qtty_web_bg.wasm",
+  "../../qtty-js/qtty-web/pkg/qtty_web_bg.wasm",
   import.meta.url,
 );
 const tempochWasm = new URL(
-  "../../../tempoch-js/tempoch-web/pkg/tempoch_web_bg.wasm",
+  "../../tempoch-js/tempoch-web/pkg/tempoch_web_bg.wasm",
   import.meta.url,
 );
 const siderustWasm = new URL("../pkg/siderust_web_bg.wasm", import.meta.url);

@@ -2,6 +2,14 @@
 
 All notable changes to the JavaScript workspace are documented here.
 
+## [Unreleased]
+
+### Changed
+- Documented the shared `rework-ffi` development flow for `qtty-js`,
+  `tempoch-js`, and `siderust-js`, including the canonical-workspace path
+  patches used for local integration and the branch-pinned git-patch workflow
+  to use once those Rust branches are committed.
+
 ## [0.1.0] - 2026-03-11
 
 ### Added

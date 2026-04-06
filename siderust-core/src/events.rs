@@ -106,6 +106,16 @@ use siderust::calculus::azimuth::{
     AzimuthCrossingEvent, AzimuthExtremum, AzimuthExtremumKind,
 };
 use tempoch::{Period, MJD};
+use qtty::*;
+use siderust::calculus::altitude::{self, SearchOpts};
+use siderust::calculus::azimuth;
+use siderust::coordinates::centers::Geodetic;
+use siderust::coordinates::frames::ECEF;
+use siderust::AltitudePeriodsProvider;
+use siderust::AzimuthProvider;
+
+use crate::body::BodyKind;
+use crate::dispatch_body;
 
 impl From<SiderustCrossingDirection> for CrossingDirection {
     fn from(d: SiderustCrossingDirection) -> Self {
@@ -181,4 +191,264 @@ impl From<AzimuthExtremum> for AzimuthExtremumData {
             kind: e.kind.into(),
         }
     }
+}
+
+fn validate_finite(label: &str, value: f64) -> Result<f64, String> {
+    if value.is_finite() {
+        Ok(value)
+    } else {
+        Err(format!("{label} must be finite"))
+    }
+}
+
+pub fn make_window(start_mjd: f64, end_mjd: f64) -> Result<Period<MJD>, String> {
+    validate_finite("startMjd", start_mjd)?;
+    validate_finite("endMjd", end_mjd)?;
+    if start_mjd >= end_mjd {
+        return Err("Window start must be before end (startMjd < endMjd)".to_string());
+    }
+    Ok(Period::new(
+        tempoch::ModifiedJulianDate::new(start_mjd),
+        tempoch::ModifiedJulianDate::new(end_mjd),
+    ))
+}
+
+pub fn body_altitude_at(
+    body: BodyKind,
+    observer: &Geodetic<ECEF>,
+    mjd: f64,
+) -> Result<f64, String> {
+    let mjd = validate_finite("mjd", mjd)?;
+    let instant = tempoch::ModifiedJulianDate::new(mjd);
+    Ok(dispatch_body!(body, |b| {
+        b.altitude_at(observer, instant).to::<Degree>().value()
+    }))
+}
+
+pub fn body_azimuth_at(
+    body: BodyKind,
+    observer: &Geodetic<ECEF>,
+    mjd: f64,
+) -> Result<f64, String> {
+    let mjd = validate_finite("mjd", mjd)?;
+    let instant = tempoch::ModifiedJulianDate::new(mjd);
+    Ok(dispatch_body!(body, |b| {
+        b.azimuth_at(observer, instant).to::<Degree>().value()
+    }))
+}
+
+pub fn body_crossings(
+    body: BodyKind,
+    observer: &Geodetic<ECEF>,
+    start_mjd: f64,
+    end_mjd: f64,
+    threshold_deg: f64,
+) -> Result<Vec<CrossingEventData>, String> {
+    let window = make_window(start_mjd, end_mjd)?;
+    let threshold = Degrees::new(validate_finite("thresholdDeg", threshold_deg)?);
+    let opts = SearchOpts::default();
+    Ok(dispatch_body!(body, |b| {
+        altitude::crossings(&b, observer, window, threshold, opts)
+            .into_iter()
+            .map(Into::into)
+            .collect()
+    }))
+}
+
+pub fn body_culminations(
+    body: BodyKind,
+    observer: &Geodetic<ECEF>,
+    start_mjd: f64,
+    end_mjd: f64,
+) -> Result<Vec<CulminationEventData>, String> {
+    let window = make_window(start_mjd, end_mjd)?;
+    let opts = SearchOpts::default();
+    Ok(dispatch_body!(body, |b| {
+        altitude::culminations(&b, observer, window, opts)
+            .into_iter()
+            .map(Into::into)
+            .collect()
+    }))
+}
+
+pub fn body_above_threshold(
+    body: BodyKind,
+    observer: &Geodetic<ECEF>,
+    start_mjd: f64,
+    end_mjd: f64,
+    threshold_deg: f64,
+) -> Result<Vec<MjdPeriodData>, String> {
+    let window = make_window(start_mjd, end_mjd)?;
+    let threshold = Degrees::new(validate_finite("thresholdDeg", threshold_deg)?);
+    let opts = SearchOpts::default();
+    Ok(dispatch_body!(body, |b| {
+        altitude::above_threshold(&b, observer, window, threshold, opts)
+            .into_iter()
+            .map(Into::into)
+            .collect()
+    }))
+}
+
+pub fn body_below_threshold(
+    body: BodyKind,
+    observer: &Geodetic<ECEF>,
+    start_mjd: f64,
+    end_mjd: f64,
+    threshold_deg: f64,
+) -> Result<Vec<MjdPeriodData>, String> {
+    let window = make_window(start_mjd, end_mjd)?;
+    let threshold = Degrees::new(validate_finite("thresholdDeg", threshold_deg)?);
+    let opts = SearchOpts::default();
+    Ok(dispatch_body!(body, |b| {
+        altitude::below_threshold(&b, observer, window, threshold, opts)
+            .into_iter()
+            .map(Into::into)
+            .collect()
+    }))
+}
+
+pub fn body_azimuth_crossings(
+    body: BodyKind,
+    observer: &Geodetic<ECEF>,
+    start_mjd: f64,
+    end_mjd: f64,
+    azimuth_deg: f64,
+) -> Result<Vec<AzimuthCrossingEventData>, String> {
+    let window = make_window(start_mjd, end_mjd)?;
+    let bearing = Degrees::new(validate_finite("azimuthDeg", azimuth_deg)?);
+    let opts = SearchOpts::default();
+    Ok(dispatch_body!(body, |b| {
+        azimuth::azimuth_crossings(&b, observer, window, bearing, opts)
+            .into_iter()
+            .map(Into::into)
+            .collect()
+    }))
+}
+
+pub fn body_azimuth_extrema(
+    body: BodyKind,
+    observer: &Geodetic<ECEF>,
+    start_mjd: f64,
+    end_mjd: f64,
+) -> Result<Vec<AzimuthExtremumData>, String> {
+    let window = make_window(start_mjd, end_mjd)?;
+    let opts = SearchOpts::default();
+    Ok(dispatch_body!(body, |b| {
+        azimuth::azimuth_extrema(&b, observer, window, opts)
+            .into_iter()
+            .map(Into::into)
+            .collect()
+    }))
+}
+
+pub fn star_altitude_at(
+    star: &siderust::bodies::Star<'_>,
+    observer: &Geodetic<ECEF>,
+    mjd: f64,
+) -> Result<f64, String> {
+    let mjd = validate_finite("mjd", mjd)?;
+    let instant = tempoch::ModifiedJulianDate::new(mjd);
+    Ok(star.altitude_at(observer, instant).to::<Degree>().value())
+}
+
+pub fn star_azimuth_at(
+    star: &siderust::bodies::Star<'_>,
+    observer: &Geodetic<ECEF>,
+    mjd: f64,
+) -> Result<f64, String> {
+    let mjd = validate_finite("mjd", mjd)?;
+    let instant = tempoch::ModifiedJulianDate::new(mjd);
+    Ok(star.azimuth_at(observer, instant).to::<Degree>().value())
+}
+
+pub fn star_crossings(
+    star: &siderust::bodies::Star<'_>,
+    observer: &Geodetic<ECEF>,
+    start_mjd: f64,
+    end_mjd: f64,
+    threshold_deg: f64,
+) -> Result<Vec<CrossingEventData>, String> {
+    let window = make_window(start_mjd, end_mjd)?;
+    let threshold = Degrees::new(validate_finite("thresholdDeg", threshold_deg)?);
+    let opts = SearchOpts::default();
+    Ok(altitude::crossings(star, observer, window, threshold, opts)
+        .into_iter()
+        .map(Into::into)
+        .collect())
+}
+
+pub fn star_culminations(
+    star: &siderust::bodies::Star<'_>,
+    observer: &Geodetic<ECEF>,
+    start_mjd: f64,
+    end_mjd: f64,
+) -> Result<Vec<CulminationEventData>, String> {
+    let window = make_window(start_mjd, end_mjd)?;
+    let opts = SearchOpts::default();
+    Ok(altitude::culminations(star, observer, window, opts)
+        .into_iter()
+        .map(Into::into)
+        .collect())
+}
+
+pub fn star_above_threshold(
+    star: &siderust::bodies::Star<'_>,
+    observer: &Geodetic<ECEF>,
+    start_mjd: f64,
+    end_mjd: f64,
+    threshold_deg: f64,
+) -> Result<Vec<MjdPeriodData>, String> {
+    let window = make_window(start_mjd, end_mjd)?;
+    let threshold = Degrees::new(validate_finite("thresholdDeg", threshold_deg)?);
+    let opts = SearchOpts::default();
+    Ok(altitude::above_threshold(star, observer, window, threshold, opts)
+        .into_iter()
+        .map(Into::into)
+        .collect())
+}
+
+pub fn star_below_threshold(
+    star: &siderust::bodies::Star<'_>,
+    observer: &Geodetic<ECEF>,
+    start_mjd: f64,
+    end_mjd: f64,
+    threshold_deg: f64,
+) -> Result<Vec<MjdPeriodData>, String> {
+    let window = make_window(start_mjd, end_mjd)?;
+    let threshold = Degrees::new(validate_finite("thresholdDeg", threshold_deg)?);
+    let opts = SearchOpts::default();
+    Ok(altitude::below_threshold(star, observer, window, threshold, opts)
+        .into_iter()
+        .map(Into::into)
+        .collect())
+}
+
+pub fn star_azimuth_crossings(
+    star: &siderust::bodies::Star<'_>,
+    observer: &Geodetic<ECEF>,
+    start_mjd: f64,
+    end_mjd: f64,
+    azimuth_deg: f64,
+) -> Result<Vec<AzimuthCrossingEventData>, String> {
+    let window = make_window(start_mjd, end_mjd)?;
+    let bearing = Degrees::new(validate_finite("azimuthDeg", azimuth_deg)?);
+    let opts = SearchOpts::default();
+    Ok(azimuth::azimuth_crossings(star, observer, window, bearing, opts)
+        .into_iter()
+        .map(Into::into)
+        .collect())
+}
+
+pub fn star_azimuth_extrema(
+    star: &siderust::bodies::Star<'_>,
+    observer: &Geodetic<ECEF>,
+    start_mjd: f64,
+    end_mjd: f64,
+) -> Result<Vec<AzimuthExtremumData>, String> {
+    let window = make_window(start_mjd, end_mjd)?;
+    let opts = SearchOpts::default();
+    Ok(azimuth::azimuth_extrema(star, observer, window, opts)
+        .into_iter()
+        .map(Into::into)
+        .collect())
 }

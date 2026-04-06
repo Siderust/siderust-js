@@ -1,25 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Vallés Puig, Ramon
 
-//! Altitude and azimuth event queries — the core observation-planning API.
+//! Altitude and azimuth event queries — thin wasm wrappers over shared core logic.
 
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
-use crate::body::{dispatch_body, parse_body, to_js};
-use crate::observer::Observer;
-use crate::star::Star;
-
-use qtty::*;
-use siderust::calculus::altitude::{self, SearchOpts};
-use siderust::calculus::azimuth;
-use siderust::AltitudePeriodsProvider;
-use siderust::AzimuthProvider;
+use siderust_binding_core::events as core_events;
 use tempoch::{ModifiedJulianDate, Period, MJD};
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Result types (serde-serialised — becomes plain JS objects)
-// ═══════════════════════════════════════════════════════════════════════════
+use crate::body::{parse_body, to_js};
+use crate::observer::Observer;
+use crate::star::Star;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -58,130 +50,72 @@ pub struct AzimuthExtremum {
     pub kind: String,
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Helpers
-// ═══════════════════════════════════════════════════════════════════════════
-
-pub(crate) fn make_window(start_mjd: f64, end_mjd: f64) -> Result<Period<MJD>, JsError> {
-    if !start_mjd.is_finite() || !end_mjd.is_finite() {
-        return Err(JsError::new(
-            "Window bounds (startMjd, endMjd) must be finite",
-        ));
+impl From<core_events::CrossingEventData> for CrossingEvent {
+    fn from(event: core_events::CrossingEventData) -> Self {
+        Self {
+            mjd: event.mjd,
+            direction: event.direction.as_str().to_string(),
+        }
     }
-    if start_mjd >= end_mjd {
-        return Err(JsError::new(
-            "Window start must be before end (startMjd < endMjd)",
-        ));
+}
+
+impl From<core_events::CulminationEventData> for CulminationEvent {
+    fn from(event: core_events::CulminationEventData) -> Self {
+        Self {
+            mjd: event.mjd,
+            altitude_deg: event.altitude_deg,
+            kind: event.kind.as_str().to_string(),
+        }
     }
-    Ok(Period::new(
-        ModifiedJulianDate::new(start_mjd),
-        ModifiedJulianDate::new(end_mjd),
-    ))
 }
 
-fn convert_crossings(events: Vec<altitude::CrossingEvent>) -> Vec<CrossingEvent> {
-    events
-        .into_iter()
-        .map(|e| CrossingEvent {
-            mjd: e.mjd.value(),
-            direction: match e.direction {
-                altitude::CrossingDirection::Rising => "rising".to_string(),
-                altitude::CrossingDirection::Setting => "setting".to_string(),
-            },
-        })
-        .collect()
+impl From<core_events::MjdPeriodData> for MjdPeriod {
+    fn from(period: core_events::MjdPeriodData) -> Self {
+        Self {
+            start_mjd: period.start_mjd,
+            end_mjd: period.end_mjd,
+        }
+    }
 }
 
-fn convert_culminations(events: Vec<altitude::CulminationEvent>) -> Vec<CulminationEvent> {
-    events
-        .into_iter()
-        .map(|e| CulminationEvent {
-            mjd: e.mjd.value(),
-            altitude_deg: e.altitude.value(),
-            kind: match e.kind {
-                altitude::CulminationKind::Max => "max".to_string(),
-                altitude::CulminationKind::Min => "min".to_string(),
-            },
-        })
-        .collect()
+impl From<core_events::AzimuthCrossingEventData> for AzimuthCrossingEvent {
+    fn from(event: core_events::AzimuthCrossingEventData) -> Self {
+        Self {
+            mjd: event.mjd,
+            direction: event.direction.as_str().to_string(),
+        }
+    }
 }
 
-fn convert_periods(periods: Vec<Period<MJD>>) -> Vec<MjdPeriod> {
-    periods
-        .into_iter()
-        .map(|p| MjdPeriod {
-            start_mjd: p.start.value(),
-            end_mjd: p.end.value(),
-        })
-        .collect()
+impl From<core_events::AzimuthExtremumData> for AzimuthExtremum {
+    fn from(event: core_events::AzimuthExtremumData) -> Self {
+        Self {
+            mjd: event.mjd,
+            azimuth_deg: event.azimuth_deg,
+            kind: event.kind.as_str().to_string(),
+        }
+    }
 }
 
-fn convert_az_crossings(
-    events: Vec<siderust::AzimuthCrossingEvent>,
-) -> Vec<AzimuthCrossingEvent> {
-    events
-        .into_iter()
-        .map(|e| AzimuthCrossingEvent {
-            mjd: e.mjd.value(),
-            direction: match e.direction {
-                siderust::AzimuthCrossingDirection::Rising => "rising".to_string(),
-                siderust::AzimuthCrossingDirection::Setting => "setting".to_string(),
-            },
-        })
-        .collect()
+fn into_web_vec<T, U>(items: Vec<T>) -> Vec<U>
+where
+    U: From<T>,
+{
+    items.into_iter().map(U::from).collect()
 }
 
-fn convert_az_extrema(events: Vec<siderust::AzimuthExtremum>) -> Vec<AzimuthExtremum> {
-    events
-        .into_iter()
-        .map(|e| AzimuthExtremum {
-            mjd: e.mjd.value(),
-            azimuth_deg: e.azimuth.value(),
-            kind: match e.kind {
-                siderust::AzimuthExtremumKind::Max => "max".to_string(),
-                siderust::AzimuthExtremumKind::Min => "min".to_string(),
-            },
-        })
-        .collect()
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Body altitude — instantaneous
-// ═══════════════════════════════════════════════════════════════════════════
-
-/// Compute the altitude of a solar-system body at a single instant.
 #[wasm_bindgen(js_name = "bodyAltitudeAt")]
 pub fn body_altitude_at(body: &str, observer: &Observer, mjd: f64) -> Result<f64, JsError> {
-    if !mjd.is_finite() {
-        return Err(JsError::new("mjd must be finite"));
-    }
-    let kind = parse_body(body)?;
-    let m = ModifiedJulianDate::new(mjd);
-    let result: f64 = dispatch_body!(kind, |b| {
-        b.altitude_at(&observer.inner, m).to::<Degree>().value()
-    });
-    Ok(result)
+    core_events::body_altitude_at(parse_body(body)?, &observer.inner, mjd)
+        .map_err(|error| JsError::new(&error))
 }
 
-/// Compute the azimuth of a solar-system body at a single instant.
 #[wasm_bindgen(js_name = "bodyAzimuthAt")]
 pub fn body_azimuth_at(body: &str, observer: &Observer, mjd: f64) -> Result<f64, JsError> {
-    if !mjd.is_finite() {
-        return Err(JsError::new("mjd must be finite"));
-    }
-    let kind = parse_body(body)?;
-    let m = ModifiedJulianDate::new(mjd);
-    let result: f64 = dispatch_body!(kind, |b| {
-        b.azimuth_at(&observer.inner, m).to::<Degree>().value()
-    });
-    Ok(result)
+    core_events::body_azimuth_at(parse_body(body)?, &observer.inner, mjd)
+        .map_err(|error| JsError::new(&error))
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Body altitude — batch events
-// ═══════════════════════════════════════════════════════════════════════════
-
-/// Find threshold-crossing events (rise/set) for a solar-system body.
 #[wasm_bindgen(js_name = "bodyCrossings")]
 pub fn body_crossings(
     body: &str,
@@ -190,17 +124,18 @@ pub fn body_crossings(
     end_mjd: f64,
     threshold_deg: f64,
 ) -> Result<JsValue, JsError> {
-    let kind = parse_body(body)?;
-    let window = make_window(start_mjd, end_mjd)?;
-    let thr = Degrees::new(threshold_deg);
-    let opts = SearchOpts::default();
-    let result = dispatch_body!(kind, |b| {
-        convert_crossings(altitude::crossings(&b, &observer.inner, window, thr, opts))
-    });
+    let result = core_events::body_crossings(
+        parse_body(body)?,
+        &observer.inner,
+        start_mjd,
+        end_mjd,
+        threshold_deg,
+    )
+        .map(into_web_vec::<core_events::CrossingEventData, CrossingEvent>)
+        .map_err(|error| JsError::new(&error))?;
     to_js(&result)
 }
 
-/// Find culmination events (altitude local extrema) for a solar-system body.
 #[wasm_bindgen(js_name = "bodyCulminations")]
 pub fn body_culminations(
     body: &str,
@@ -208,16 +143,17 @@ pub fn body_culminations(
     start_mjd: f64,
     end_mjd: f64,
 ) -> Result<JsValue, JsError> {
-    let kind = parse_body(body)?;
-    let window = make_window(start_mjd, end_mjd)?;
-    let opts = SearchOpts::default();
-    let result = dispatch_body!(kind, |b| {
-        convert_culminations(altitude::culminations(&b, &observer.inner, window, opts))
-    });
+    let result = core_events::body_culminations(
+        parse_body(body)?,
+        &observer.inner,
+        start_mjd,
+        end_mjd,
+    )
+        .map(into_web_vec::<core_events::CulminationEventData, CulminationEvent>)
+        .map_err(|error| JsError::new(&error))?;
     to_js(&result)
 }
 
-/// Find periods where a body's altitude is above a threshold.
 #[wasm_bindgen(js_name = "bodyAboveThreshold")]
 pub fn body_above_threshold(
     body: &str,
@@ -226,23 +162,18 @@ pub fn body_above_threshold(
     end_mjd: f64,
     threshold_deg: f64,
 ) -> Result<JsValue, JsError> {
-    let kind = parse_body(body)?;
-    let window = make_window(start_mjd, end_mjd)?;
-    let thr = Degrees::new(threshold_deg);
-    let opts = SearchOpts::default();
-    let result = dispatch_body!(kind, |b| {
-        convert_periods(altitude::above_threshold(
-            &b,
-            &observer.inner,
-            window,
-            thr,
-            opts,
-        ))
-    });
+    let result = core_events::body_above_threshold(
+        parse_body(body)?,
+        &observer.inner,
+        start_mjd,
+        end_mjd,
+        threshold_deg,
+    )
+        .map(into_web_vec::<core_events::MjdPeriodData, MjdPeriod>)
+        .map_err(|error| JsError::new(&error))?;
     to_js(&result)
 }
 
-/// Find periods where a body's altitude is below a threshold.
 #[wasm_bindgen(js_name = "bodyBelowThreshold")]
 pub fn body_below_threshold(
     body: &str,
@@ -251,23 +182,18 @@ pub fn body_below_threshold(
     end_mjd: f64,
     threshold_deg: f64,
 ) -> Result<JsValue, JsError> {
-    let kind = parse_body(body)?;
-    let window = make_window(start_mjd, end_mjd)?;
-    let thr = Degrees::new(threshold_deg);
-    let opts = SearchOpts::default();
-    let result = dispatch_body!(kind, |b| {
-        convert_periods(altitude::below_threshold(
-            &b,
-            &observer.inner,
-            window,
-            thr,
-            opts,
-        ))
-    });
+    let result = core_events::body_below_threshold(
+        parse_body(body)?,
+        &observer.inner,
+        start_mjd,
+        end_mjd,
+        threshold_deg,
+    )
+        .map(into_web_vec::<core_events::MjdPeriodData, MjdPeriod>)
+        .map_err(|error| JsError::new(&error))?;
     to_js(&result)
 }
 
-/// Find azimuth-crossing events for a body.
 #[wasm_bindgen(js_name = "bodyAzimuthCrossings")]
 pub fn body_azimuth_crossings(
     body: &str,
@@ -276,23 +202,18 @@ pub fn body_azimuth_crossings(
     end_mjd: f64,
     bearing_deg: f64,
 ) -> Result<JsValue, JsError> {
-    let kind = parse_body(body)?;
-    let window = make_window(start_mjd, end_mjd)?;
-    let bearing = Degrees::new(bearing_deg);
-    let opts = SearchOpts::default();
-    let result = dispatch_body!(kind, |b| {
-        convert_az_crossings(azimuth::azimuth_crossings(
-            &b,
-            &observer.inner,
-            window,
-            bearing,
-            opts,
-        ))
-    });
+    let result = core_events::body_azimuth_crossings(
+        parse_body(body)?,
+        &observer.inner,
+        start_mjd,
+        end_mjd,
+        bearing_deg,
+    )
+        .map(into_web_vec::<core_events::AzimuthCrossingEventData, AzimuthCrossingEvent>)
+        .map_err(|error| JsError::new(&error))?;
     to_js(&result)
 }
 
-/// Find azimuth extrema (max/min bearing) for a body.
 #[wasm_bindgen(js_name = "bodyAzimuthExtrema")]
 pub fn body_azimuth_extrema(
     body: &str,
@@ -300,57 +221,29 @@ pub fn body_azimuth_extrema(
     start_mjd: f64,
     end_mjd: f64,
 ) -> Result<JsValue, JsError> {
-    let kind = parse_body(body)?;
-    let window = make_window(start_mjd, end_mjd)?;
-    let opts = SearchOpts::default();
-    let result = dispatch_body!(kind, |b| {
-        convert_az_extrema(azimuth::azimuth_extrema(
-            &b,
-            &observer.inner,
-            window,
-            opts,
-        ))
-    });
+    let result = core_events::body_azimuth_extrema(
+        parse_body(body)?,
+        &observer.inner,
+        start_mjd,
+        end_mjd,
+    )
+        .map(into_web_vec::<core_events::AzimuthExtremumData, AzimuthExtremum>)
+        .map_err(|error| JsError::new(&error))?;
     to_js(&result)
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Star altitude — instantaneous
-// ═══════════════════════════════════════════════════════════════════════════
-
-/// Compute the altitude of a catalog or custom star at a single instant.
 #[wasm_bindgen(js_name = "starAltitudeAt")]
 pub fn star_altitude_at(star: &Star, observer: &Observer, mjd: f64) -> Result<f64, JsError> {
-    if !mjd.is_finite() {
-        return Err(JsError::new("mjd must be finite"));
-    }
-    let m = ModifiedJulianDate::new(mjd);
-    Ok(star
-        .inner
-        .altitude_at(&observer.inner, m)
-        .to::<Degree>()
-        .value())
+    core_events::star_altitude_at(&star.inner, &observer.inner, mjd)
+        .map_err(|error| JsError::new(&error))
 }
 
-/// Compute the azimuth of a star at a single instant.
 #[wasm_bindgen(js_name = "starAzimuthAt")]
 pub fn star_azimuth_at(star: &Star, observer: &Observer, mjd: f64) -> Result<f64, JsError> {
-    if !mjd.is_finite() {
-        return Err(JsError::new("mjd must be finite"));
-    }
-    let m = ModifiedJulianDate::new(mjd);
-    Ok(star
-        .inner
-        .azimuth_at(&observer.inner, m)
-        .to::<Degree>()
-        .value())
+    core_events::star_azimuth_at(&star.inner, &observer.inner, mjd)
+        .map_err(|error| JsError::new(&error))
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Star altitude — batch events
-// ═══════════════════════════════════════════════════════════════════════════
-
-/// Find threshold-crossing events for a star.
 #[wasm_bindgen(js_name = "starCrossings")]
 pub fn star_crossings(
     star: &Star,
@@ -359,19 +252,18 @@ pub fn star_crossings(
     end_mjd: f64,
     threshold_deg: f64,
 ) -> Result<JsValue, JsError> {
-    let window = make_window(start_mjd, end_mjd)?;
-    let thr = Degrees::new(threshold_deg);
-    let opts = SearchOpts::default();
-    to_js(&convert_crossings(altitude::crossings(
+    let result = core_events::star_crossings(
         &star.inner,
         &observer.inner,
-        window,
-        thr,
-        opts,
-    )))
+        start_mjd,
+        end_mjd,
+        threshold_deg,
+    )
+        .map(into_web_vec::<core_events::CrossingEventData, CrossingEvent>)
+        .map_err(|error| JsError::new(&error))?;
+    to_js(&result)
 }
 
-/// Find culmination events for a star.
 #[wasm_bindgen(js_name = "starCulminations")]
 pub fn star_culminations(
     star: &Star,
@@ -379,17 +271,17 @@ pub fn star_culminations(
     start_mjd: f64,
     end_mjd: f64,
 ) -> Result<JsValue, JsError> {
-    let window = make_window(start_mjd, end_mjd)?;
-    let opts = SearchOpts::default();
-    to_js(&convert_culminations(altitude::culminations(
+    let result = core_events::star_culminations(
         &star.inner,
         &observer.inner,
-        window,
-        opts,
-    )))
+        start_mjd,
+        end_mjd,
+    )
+        .map(into_web_vec::<core_events::CulminationEventData, CulminationEvent>)
+        .map_err(|error| JsError::new(&error))?;
+    to_js(&result)
 }
 
-/// Find periods where a star's altitude is above a threshold.
 #[wasm_bindgen(js_name = "starAboveThreshold")]
 pub fn star_above_threshold(
     star: &Star,
@@ -398,19 +290,18 @@ pub fn star_above_threshold(
     end_mjd: f64,
     threshold_deg: f64,
 ) -> Result<JsValue, JsError> {
-    let window = make_window(start_mjd, end_mjd)?;
-    let thr = Degrees::new(threshold_deg);
-    let opts = SearchOpts::default();
-    to_js(&convert_periods(altitude::above_threshold(
+    let result = core_events::star_above_threshold(
         &star.inner,
         &observer.inner,
-        window,
-        thr,
-        opts,
-    )))
+        start_mjd,
+        end_mjd,
+        threshold_deg,
+    )
+        .map(into_web_vec::<core_events::MjdPeriodData, MjdPeriod>)
+        .map_err(|error| JsError::new(&error))?;
+    to_js(&result)
 }
 
-/// Find periods where a star's altitude is below a threshold.
 #[wasm_bindgen(js_name = "starBelowThreshold")]
 pub fn star_below_threshold(
     star: &Star,
@@ -419,23 +310,18 @@ pub fn star_below_threshold(
     end_mjd: f64,
     threshold_deg: f64,
 ) -> Result<JsValue, JsError> {
-    let window = make_window(start_mjd, end_mjd)?;
-    let thr = Degrees::new(threshold_deg);
-    let opts = SearchOpts::default();
-    to_js(&convert_periods(altitude::below_threshold(
+    let result = core_events::star_below_threshold(
         &star.inner,
         &observer.inner,
-        window,
-        thr,
-        opts,
-    )))
+        start_mjd,
+        end_mjd,
+        threshold_deg,
+    )
+        .map(into_web_vec::<core_events::MjdPeriodData, MjdPeriod>)
+        .map_err(|error| JsError::new(&error))?;
+    to_js(&result)
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Star azimuth — batch events
-// ═══════════════════════════════════════════════════════════════════════════
-
-/// Find azimuth-crossing events for a star.
 #[wasm_bindgen(js_name = "starAzimuthCrossings")]
 pub fn star_azimuth_crossings(
     star: &Star,
@@ -444,19 +330,18 @@ pub fn star_azimuth_crossings(
     end_mjd: f64,
     bearing_deg: f64,
 ) -> Result<JsValue, JsError> {
-    let window = make_window(start_mjd, end_mjd)?;
-    let bearing = Degrees::new(bearing_deg);
-    let opts = SearchOpts::default();
-    to_js(&convert_az_crossings(azimuth::azimuth_crossings(
+    let result = core_events::star_azimuth_crossings(
         &star.inner,
         &observer.inner,
-        window,
-        bearing,
-        opts,
-    )))
+        start_mjd,
+        end_mjd,
+        bearing_deg,
+    )
+        .map(into_web_vec::<core_events::AzimuthCrossingEventData, AzimuthCrossingEvent>)
+        .map_err(|error| JsError::new(&error))?;
+    to_js(&result)
 }
 
-/// Find azimuth extrema (max/min bearing) for a star.
 #[wasm_bindgen(js_name = "starAzimuthExtrema")]
 pub fn star_azimuth_extrema(
     star: &Star,
@@ -464,57 +349,47 @@ pub fn star_azimuth_extrema(
     start_mjd: f64,
     end_mjd: f64,
 ) -> Result<JsValue, JsError> {
-    let window = make_window(start_mjd, end_mjd)?;
-    let opts = SearchOpts::default();
-    to_js(&convert_az_extrema(azimuth::azimuth_extrema(
+    let result = core_events::star_azimuth_extrema(
         &star.inner,
         &observer.inner,
-        window,
-        opts,
-    )))
+        start_mjd,
+        end_mjd,
+    )
+        .map(into_web_vec::<core_events::AzimuthExtremumData, AzimuthExtremum>)
+        .map_err(|error| JsError::new(&error))?;
+    to_js(&result)
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Period utilities
-// ═══════════════════════════════════════════════════════════════════════════
-
-/// Intersect two lists of MJD periods, returning only overlapping intervals.
 #[wasm_bindgen(js_name = "intersectPeriods")]
-pub fn intersect_periods_js(
-    periods1: JsValue,
-    periods2: JsValue,
-) -> Result<JsValue, JsError> {
-    let p1: Vec<MjdPeriod> = serde_wasm_bindgen::from_value(periods1)
-        .map_err(|e| JsError::new(&format!("periods1: {e}")))?;
-    let p2: Vec<MjdPeriod> = serde_wasm_bindgen::from_value(periods2)
-        .map_err(|e| JsError::new(&format!("periods2: {e}")))?;
-
-    let tp1: Vec<Period<MJD>> = p1
+pub fn intersect_periods_js(periods1: JsValue, periods2: JsValue) -> Result<JsValue, JsError> {
+    let periods1: Vec<MjdPeriod> =
+        serde_wasm_bindgen::from_value(periods1).map_err(|error| JsError::new(&error.to_string()))?;
+    let periods2: Vec<MjdPeriod> =
+        serde_wasm_bindgen::from_value(periods2).map_err(|error| JsError::new(&error.to_string()))?;
+    let p1: Vec<Period<MJD>> = periods1
         .iter()
-        .map(|p| {
+        .map(|period| {
             Period::new(
-                ModifiedJulianDate::new(p.start_mjd),
-                ModifiedJulianDate::new(p.end_mjd),
+                ModifiedJulianDate::new(period.start_mjd),
+                ModifiedJulianDate::new(period.end_mjd),
             )
         })
         .collect();
-    let tp2: Vec<Period<MJD>> = p2
+    let p2: Vec<Period<MJD>> = periods2
         .iter()
-        .map(|p| {
+        .map(|period| {
             Period::new(
-                ModifiedJulianDate::new(p.start_mjd),
-                ModifiedJulianDate::new(p.end_mjd),
+                ModifiedJulianDate::new(period.start_mjd),
+                ModifiedJulianDate::new(period.end_mjd),
             )
         })
         .collect();
-
-    let result = tempoch::intersect_periods(&tp1, &tp2);
-    let out: Vec<MjdPeriod> = result
+    let result: Vec<MjdPeriod> = tempoch::intersect_periods(&p1, &p2)
         .into_iter()
-        .map(|p| MjdPeriod {
-            start_mjd: p.start.value(),
-            end_mjd: p.end.value(),
+        .map(|period| MjdPeriod {
+            start_mjd: period.start.value(),
+            end_mjd: period.end.value(),
         })
         .collect();
-    to_js(&out)
+    to_js(&result)
 }

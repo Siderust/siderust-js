@@ -4,11 +4,9 @@
 //! Observer (geodetic site) for topocentric computations.
 
 use wasm_bindgen::prelude::*;
-
-use qtty::*;
 use siderust::coordinates::centers::Geodetic;
 use siderust::coordinates::frames::ECEF;
-use siderust::observatories;
+use siderust_binding_core::observer as core_observer;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Observer class
@@ -29,17 +27,10 @@ impl Observer {
     /// @param heightM  — Height above WGS84 ellipsoid in metres.
     #[wasm_bindgen(constructor)]
     pub fn new(lon_deg: f64, lat_deg: f64, height_m: f64) -> Result<Observer, JsError> {
-        if !lon_deg.is_finite() || !lat_deg.is_finite() || !height_m.is_finite() {
-            return Err(JsError::new(
-                "Observer coordinates must be finite (not NaN or ±infinity)",
-            ));
-        }
+        core_observer::validate_observer_coords(lon_deg, lat_deg, height_m)
+            .map_err(|error| JsError::new(&error))?;
         Ok(Self {
-            inner: Geodetic::<ECEF>::new(
-                Degrees::new(lon_deg),
-                Degrees::new(lat_deg),
-                Meters::new(height_m),
-            ),
+            inner: core_observer::create_observer(lon_deg, lat_deg, height_m),
         })
     }
 
@@ -51,7 +42,7 @@ impl Observer {
     #[wasm_bindgen(js_name = "roqueDeLasMuchachos")]
     pub fn roque_de_las_muchachos() -> Observer {
         Self {
-            inner: observatories::ROQUE_DE_LOS_MUCHACHOS,
+            inner: core_observer::roque_de_los_muchachos(),
         }
     }
 
@@ -61,7 +52,7 @@ impl Observer {
     #[wasm_bindgen(js_name = "elParanal")]
     pub fn el_paranal() -> Observer {
         Self {
-            inner: observatories::EL_PARANAL,
+            inner: core_observer::el_paranal(),
         }
     }
 
@@ -71,7 +62,7 @@ impl Observer {
     #[wasm_bindgen(js_name = "maunaKea")]
     pub fn mauna_kea() -> Observer {
         Self {
-            inner: observatories::MAUNA_KEA,
+            inner: core_observer::mauna_kea(),
         }
     }
 
@@ -81,7 +72,7 @@ impl Observer {
     #[wasm_bindgen(js_name = "laSilla")]
     pub fn la_silla() -> Observer {
         Self {
-            inner: observatories::LA_SILLA_OBSERVATORY,
+            inner: core_observer::la_silla(),
         }
     }
 
@@ -90,28 +81,28 @@ impl Observer {
     /// Longitude in degrees (east positive).
     #[wasm_bindgen(getter, js_name = "lonDeg")]
     pub fn lon_deg(&self) -> f64 {
-        self.inner.lon.value()
+        core_observer::get_observer_lon_deg(&self.inner)
     }
 
     /// Latitude in degrees (north positive).
     #[wasm_bindgen(getter, js_name = "latDeg")]
     pub fn lat_deg(&self) -> f64 {
-        self.inner.lat.value()
+        core_observer::get_observer_lat_deg(&self.inner)
     }
 
     /// Height above the WGS84 ellipsoid in metres.
     #[wasm_bindgen(getter, js_name = "heightM")]
     pub fn height_m(&self) -> f64 {
-        self.inner.height.value()
+        core_observer::get_observer_height_m(&self.inner)
     }
 
     /// Human-readable string representation.
     pub fn format(&self) -> String {
         format!(
             "Observer(lon={:.4}°, lat={:.4}°, h={:.1} m)",
-            self.inner.lon.value(),
-            self.inner.lat.value(),
-            self.inner.height.value(),
+            self.lon_deg(),
+            self.lat_deg(),
+            self.height_m(),
         )
     }
 }

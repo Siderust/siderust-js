@@ -39,6 +39,7 @@ export class Star {
     this._decDeg = _extractQuantityValue(dec, "Degree", "dec");
 
     this._name = name;
+    this._native = null;
   }
 
   /**
@@ -48,7 +49,7 @@ export class Star {
    */
   static catalog(name) {
     const native = backend.NativeStar.catalog(name);
-    return new Star(
+    const star = new Star(
       native.name,
       new Quantity(native.distanceLy, "LightYear"),
       new Quantity(native.massSolar, "SolarMass"),
@@ -57,6 +58,8 @@ export class Star {
       new Quantity(native.raDeg, "Degree"),
       new Quantity(native.decDeg, "Degree"),
     );
+    star._native = native;
+    return star;
   }
 
   /** Star name. */
@@ -94,6 +97,21 @@ export class Star {
   /** Human-readable representation. */
   format() {
     return `Star(${this._name}, d=${this._distanceLy.toFixed(1)} ly, RA=${this._raDeg.toFixed(4)}°, Dec=${this._decDeg.toFixed(4)}°)`;
+  }
+
+  toNative() {
+    if (!this._native) {
+      this._native = backend.NativeStar(
+        this._name,
+        this._distanceLy,
+        this._massSolar,
+        this._radiusSolar,
+        this._luminositySolar,
+        this._raDeg,
+        this._decDeg,
+      );
+    }
+    return this._native;
   }
 }
 

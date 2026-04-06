@@ -41,6 +41,11 @@ pub fn mauna_kea() -> Geodetic<ECEF> {
     observatories::MAUNA_KEA
 }
 
+/// Get La Silla observatory.
+pub fn la_silla() -> Geodetic<ECEF> {
+    observatories::LA_SILLA_OBSERVATORY
+}
+
 /// Get observer property values.
 pub fn get_observer_lon_deg(obs: &Geodetic<ECEF>) -> f64 {
     obs.lon.to::<Degree>().value()

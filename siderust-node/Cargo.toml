@@ -16,7 +16,7 @@ siderust = { version = "0.6.0", features = [] }
 siderust-binding-core = { path = "../siderust-core" }
 qtty     = "0.4.1"
 tempoch  = "0.4"
-affn     = { version = "0.4.1", features = ["astro"] }
+affn     = { version = "0.5.0", features = ["astro"] }
 chrono   = "0.4.44"
 napi     = { version = "2", features = ["napi6"] }
 napi-derive = "2"
@@ -27,3 +27,9 @@ napi-build = "2"
 [profile.release]
 lto = true
 strip = "symbols"
+
+[patch.crates-io]
+affn = { path = "../../../rust/affn" }
+qtty = { path = "../../../rust/qtty/qtty" }
+siderust = { path = "../../../rust/siderust" }
+tempoch = { path = "../../../rust/tempoch/tempoch" }
