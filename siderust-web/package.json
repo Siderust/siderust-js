@@ -44,8 +44,8 @@
     "rust"
   ],
   "dependencies": {
-    "@siderust/qtty-web": "^0.1.0",
-    "@siderust/tempoch-web": "^0.1.0"
+    "@siderust/qtty-web": "file:../qtty-js/qtty-web",
+    "@siderust/tempoch-web": "file:../tempoch-js/tempoch-web"
   },
   "license": "AGPL-3.0",
   "repository": {

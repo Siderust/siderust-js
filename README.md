@@ -126,6 +126,20 @@ wasm-pack build --target web --out-dir pkg --release --scope siderust
 npm test
 ```
 
+### Canonical Rust Sync
+
+The Rust crates behind `siderust-js` are intentionally patched to the canonical
+workspace checkouts under `../../../rust/`. Keep `qtty-js`, `tempoch-js`, and
+`siderust-js` aligned on the shared `rework-ffi` branch so the Node and Web
+packages see the same `qtty`, `tempoch`, and `siderust` behavior during FFI
+consolidation.
+
+For local iteration, the current path patches are the safest option because
+they follow uncommitted workspace changes immediately. If you need branch-pinned
+Cargo resolution for CI or a separate clone, switch those patches to local
+`git = "file:///..."` URLs on `branch = "rework-ffi"` after committing the Rust
+workspaces.
+
 ## Related documentation
 
 - [`siderust-node/README.md`](./siderust-node/README.md) for the Node package

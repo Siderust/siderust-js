@@ -4,16 +4,8 @@
 //! Star — catalog and custom stars for altitude/azimuth/coordinate queries.
 
 use napi_derive::napi;
-
-use qtty::length::nominal::SolarRadiuses;
-use qtty::*;
-use siderust::bodies::{self, Star};
-use siderust::coordinates::centers::Geocentric;
-use siderust::coordinates::frames::EquatorialMeanJ2000;
-use siderust::coordinates::spherical;
-use siderust::targets::CoordinateWithPM;
-use siderust::time::JulianDate;
-use std::borrow::Cow;
+use siderust::bodies::Star;
+use siderust_binding_core::star as core_star;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Star class
@@ -59,42 +51,17 @@ impl JsStar {
         ra_deg: f64,
         dec_deg: f64,
     ) -> napi::Result<Self> {
-        for (label, v) in [
-            ("distanceLy", distance_ly),
-            ("massSolar", mass_solar),
-            ("radiusSolar", radius_solar),
-            ("luminositySolar", luminosity_solar),
-            ("raDeg", ra_deg),
-            ("decDeg", dec_deg),
-        ] {
-            if !v.is_finite() {
-                return Err(napi::Error::from_reason(format!(
-                    "{label} must be finite (not NaN or ±infinity)"
-                )));
-            }
-        }
-
-        let pos = spherical::Position::<Geocentric, EquatorialMeanJ2000, LightYear>::new(
-            Degrees::new(ra_deg),
-            Degrees::new(dec_deg),
-            LightYears::new(distance_ly),
-        );
-        let target =
-            CoordinateWithPM::<spherical::Position<Geocentric, EquatorialMeanJ2000, LightYear>>::new_static(
-                pos,
-                JulianDate::J2000,
-            );
-
-        let star = Star::new(
-            Cow::<'static, str>::Owned(name),
-            LightYears::new(distance_ly),
-            SolarMasses::new(mass_solar),
-            SolarRadiuses::new(radius_solar),
-            SolarLuminosities::new(luminosity_solar),
-            target,
-        );
-
-        Ok(Self { inner: star })
+        core_star::create_star(
+            name,
+            distance_ly,
+            mass_solar,
+            radius_solar,
+            luminosity_solar,
+            ra_deg,
+            dec_deg,
+        )
+        .map(|inner| Self { inner })
+        .map_err(napi::Error::from_reason)
     }
 
     /// Look up a star from the built-in catalog by name.
@@ -103,26 +70,9 @@ impl JsStar {
     /// Arcturus, Rigel, Betelgeuse, Procyon, Aldebaran, Altair.
     #[napi(factory)]
     pub fn catalog(name: String) -> napi::Result<Self> {
-        let star: &Star<'static> = match name.to_uppercase().as_str() {
-            "VEGA" => &bodies::VEGA,
-            "SIRIUS" => &bodies::SIRIUS,
-            "POLARIS" => &bodies::POLARIS,
-            "CANOPUS" => &bodies::CANOPUS,
-            "ARCTURUS" => &bodies::ARCTURUS,
-            "RIGEL" => &bodies::RIGEL,
-            "BETELGEUSE" => &bodies::BETELGEUSE,
-            "PROCYON" => &bodies::PROCYON,
-            "ALDEBARAN" => &bodies::ALDEBARAN,
-            "ALTAIR" => &bodies::ALTAIR,
-            _ => {
-                return Err(napi::Error::from_reason(format!(
-                    "Unknown catalog star: \"{name}\". Available: Vega, Sirius, Polaris, Canopus, Arcturus, Rigel, Betelgeuse, Procyon, Aldebaran, Altair."
-                )));
-            }
-        };
-        Ok(Self {
-            inner: star.clone(),
-        })
+        core_star::catalog_star(&name)
+            .map(|inner| Self { inner })
+            .map_err(napi::Error::from_reason)
     }
 
     // ── accessors ────────────────────────────────────────────────────
@@ -185,16 +135,5 @@ impl JsStar {
 /// List all catalog star names.
 #[napi(js_name = "listCatalogStars")]
 pub fn list_catalog_stars() -> Vec<String> {
-    vec![
-        "Vega".into(),
-        "Sirius".into(),
-        "Polaris".into(),
-        "Canopus".into(),
-        "Arcturus".into(),
-        "Rigel".into(),
-        "Betelgeuse".into(),
-        "Procyon".into(),
-        "Aldebaran".into(),
-        "Altair".into(),
-    ]
+    core_star::list_catalog_star_names()
 }

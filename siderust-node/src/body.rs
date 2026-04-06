@@ -7,7 +7,6 @@ use napi_derive::napi;
 
 // Re-export shared types from the binding core.
 pub(crate) use siderust_binding_core::body::BodyKind;
-pub(crate) use siderust_binding_core::dispatch_body;
 
 /// Convert a body name string to BodyKind, mapping errors to napi::Error.
 pub(crate) fn parse_body(s: &str) -> napi::Result<BodyKind> {

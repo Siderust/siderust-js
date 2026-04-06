@@ -97,9 +97,9 @@ impl PlanetInfo {
             name: name.to_string(),
             mass_kg: p.mass.value(),
             radius_km: p.radius.value(),
-            semi_major_axis_au: p.orbit.semi_major_axis.value(),
-            eccentricity: p.orbit.eccentricity,
-            inclination_deg: p.orbit.inclination.value(),
+            semi_major_axis_au: p.orbit.shape().semi_major_axis().value(),
+            eccentricity: p.orbit.shape().eccentricity(),
+            inclination_deg: p.orbit.orientation().inclination().value(),
         }
     }
 }

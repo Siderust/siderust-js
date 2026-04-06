@@ -11,6 +11,7 @@
 'use strict';
 
 const { Quantity } = require('@siderust/qtty');
+const backend = require('./backend.js');
 
 class Observer {
   /**
@@ -24,6 +25,7 @@ class Observer {
     this._lonDeg = _extractQuantityValue(lon, 'Degree', 'lon');
     this._latDeg = _extractQuantityValue(lat, 'Degree', 'lat');
     this._heightM = _extractQuantityValue(height, 'Meter', 'height');
+    this._native = null;
 
     if (
       !Number.isFinite(this._lonDeg) ||
@@ -38,38 +40,46 @@ class Observer {
 
   /** Roque de los Muchachos Observatory (La Palma, Spain). */
   static roqueDeLasMuchachos() {
-    return new Observer(
+    const observer = new Observer(
       new Quantity(-17.8925, 'Degree'),
       new Quantity(28.7543, 'Degree'),
       new Quantity(2396, 'Meter'),
     );
+    observer._native = backend.NativeObserver.roqueDeLasMuchachos();
+    return observer;
   }
 
   /** Paranal Observatory (ESO, Chile). */
   static elParanal() {
-    return new Observer(
+    const observer = new Observer(
       new Quantity(-70.4043, 'Degree'),
       new Quantity(-24.6272, 'Degree'),
       new Quantity(2635, 'Meter'),
     );
+    observer._native = backend.NativeObserver.elParanal();
+    return observer;
   }
 
   /** Mauna Kea Observatory (Hawaiʻi, USA). */
   static maunaKea() {
-    return new Observer(
+    const observer = new Observer(
       new Quantity(-155.4681, 'Degree'),
       new Quantity(19.8207, 'Degree'),
       new Quantity(4207, 'Meter'),
     );
+    observer._native = backend.NativeObserver.maunaKea();
+    return observer;
   }
 
   /** La Silla Observatory (ESO, Chile). */
   static laSilla() {
-    return new Observer(
+    const observer = new Observer(
       new Quantity(-70.7346, 'Degree'),
       new Quantity(-29.2584, 'Degree'),
       new Quantity(2400, 'Meter'),
     );
+    observer._native = backend.NativeObserver.laSilla();
+    return observer;
   }
 
   // ── typed accessors ────────────────────────────────────────────
@@ -92,6 +102,13 @@ class Observer {
   /** Human-readable string representation. */
   format() {
     return `Observer(lon=${this._lonDeg.toFixed(4)}°, lat=${this._latDeg.toFixed(4)}°, h=${this._heightM.toFixed(1)} m)`;
+  }
+
+  toNative() {
+    if (!this._native) {
+      this._native = new backend.NativeObserver(this._lonDeg, this._latDeg, this._heightM);
+    }
+    return this._native;
   }
 }
 

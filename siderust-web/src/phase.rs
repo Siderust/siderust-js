@@ -7,7 +7,7 @@ use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 use crate::body::to_js;
-use crate::events::{make_window, MjdPeriod};
+use crate::events::MjdPeriod;
 use crate::observer::Observer;
 
 use qtty::*;
@@ -16,6 +16,7 @@ use siderust::calculus::lunar::phase::{
     find_phase_events, illumination_above, illumination_below, illumination_range,
     moon_phase_geocentric, moon_phase_topocentric, MoonPhaseLabel, PhaseSearchOpts,
 };
+use siderust_binding_core::events::make_window;
 use siderust::time::JulianDate;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -85,7 +86,7 @@ pub fn moon_phase_topo(jd: f64, observer: &Observer) -> Result<JsValue, JsError>
 /// Find all principal lunar phase events in a time window.
 #[wasm_bindgen(js_name = "findPhaseEvents")]
 pub fn find_phase_events_js(start_mjd: f64, end_mjd: f64) -> Result<JsValue, JsError> {
-    let window = make_window(start_mjd, end_mjd)?;
+    let window = make_window(start_mjd, end_mjd).map_err(|error| JsError::new(&error))?;
     let events = find_phase_events::<Vsop87Ephemeris>(window, PhaseSearchOpts::default());
     let out: Vec<PhaseEvent> = events
         .into_iter()
@@ -108,7 +109,7 @@ pub fn moon_illumination_above(
     end_mjd: f64,
     k_min: f64,
 ) -> Result<JsValue, JsError> {
-    let window = make_window(start_mjd, end_mjd)?;
+    let window = make_window(start_mjd, end_mjd).map_err(|error| JsError::new(&error))?;
     let periods = illumination_above::<Vsop87Ephemeris>(window, k_min, PhaseSearchOpts::default());
     let out: Vec<MjdPeriod> = periods
         .into_iter()
@@ -127,7 +128,7 @@ pub fn moon_illumination_below(
     end_mjd: f64,
     k_max: f64,
 ) -> Result<JsValue, JsError> {
-    let window = make_window(start_mjd, end_mjd)?;
+    let window = make_window(start_mjd, end_mjd).map_err(|error| JsError::new(&error))?;
     let periods = illumination_below::<Vsop87Ephemeris>(window, k_max, PhaseSearchOpts::default());
     let out: Vec<MjdPeriod> = periods
         .into_iter()
@@ -147,7 +148,7 @@ pub fn moon_illumination_range(
     k_min: f64,
     k_max: f64,
 ) -> Result<JsValue, JsError> {
-    let window = make_window(start_mjd, end_mjd)?;
+    let window = make_window(start_mjd, end_mjd).map_err(|error| JsError::new(&error))?;
     let periods =
         illumination_range::<Vsop87Ephemeris>(window, k_min, k_max, PhaseSearchOpts::default());
     let out: Vec<MjdPeriod> = periods

@@ -13,7 +13,7 @@ npm run build
 cd ../../tempoch-js/tempoch-web
 npm run build
 
-cd ../../siderust-js/siderust-web
+cd ../../siderust-web
 npm run build
 ```
 

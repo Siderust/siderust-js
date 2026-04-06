@@ -28,7 +28,11 @@ export async function init(module_or_path) {
     await initTempoch();
   }
   const mod = await import("../pkg/siderust_web.js");
-  await mod.default(module_or_path);
+  if (module_or_path === undefined) {
+    await mod.default();
+  } else {
+    await mod.default({ module_or_path });
+  }
   wasm = mod;
 }
 

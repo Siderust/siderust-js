@@ -4,8 +4,9 @@
 //! Lunar phase queries — geometry, events, and illumination periods.
 
 use napi_derive::napi;
+use siderust_binding_core::events::make_window;
 
-use crate::events::{make_window, MjdPeriod};
+use crate::events::MjdPeriod;
 use crate::observer::JsObserver;
 
 use qtty::*;
@@ -112,7 +113,7 @@ pub fn moon_phase_topo(jd: f64, observer: &JsObserver) -> napi::Result<MoonPhase
 /// ```
 #[napi(js_name = "findPhaseEvents")]
 pub fn find_phase_events_js(start_mjd: f64, end_mjd: f64) -> napi::Result<Vec<PhaseEvent>> {
-    let window = make_window(start_mjd, end_mjd)?;
+    let window = make_window(start_mjd, end_mjd).map_err(napi::Error::from_reason)?;
     let events = find_phase_events::<Vsop87Ephemeris>(window, PhaseSearchOpts::default());
     Ok(events
         .into_iter()
@@ -139,7 +140,7 @@ pub fn moon_illumination_above(
     end_mjd: f64,
     k_min: f64,
 ) -> napi::Result<Vec<MjdPeriod>> {
-    let window = make_window(start_mjd, end_mjd)?;
+    let window = make_window(start_mjd, end_mjd).map_err(napi::Error::from_reason)?;
     let periods = illumination_above::<Vsop87Ephemeris>(window, k_min, PhaseSearchOpts::default());
     Ok(periods
         .into_iter()
@@ -157,7 +158,7 @@ pub fn moon_illumination_below(
     end_mjd: f64,
     k_max: f64,
 ) -> napi::Result<Vec<MjdPeriod>> {
-    let window = make_window(start_mjd, end_mjd)?;
+    let window = make_window(start_mjd, end_mjd).map_err(napi::Error::from_reason)?;
     let periods = illumination_below::<Vsop87Ephemeris>(window, k_max, PhaseSearchOpts::default());
     Ok(periods
         .into_iter()
@@ -176,7 +177,7 @@ pub fn moon_illumination_range(
     k_min: f64,
     k_max: f64,
 ) -> napi::Result<Vec<MjdPeriod>> {
-    let window = make_window(start_mjd, end_mjd)?;
+    let window = make_window(start_mjd, end_mjd).map_err(napi::Error::from_reason)?;
     let periods =
         illumination_range::<Vsop87Ephemeris>(window, k_min, k_max, PhaseSearchOpts::default());
     Ok(periods
